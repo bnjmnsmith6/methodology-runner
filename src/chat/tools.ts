@@ -653,24 +653,27 @@ async function handleStartVision(input: any) {
       };
     }
     
-    // Load vision doc
-    const { data: visionDoc } = await supabase
+    // Load vision doc (extract from JSONB)
+    const { data: visionDocRow } = await supabase
       .from('vision_documents')
-      .select('*')
+      .select('id, doc')
       .eq('id', session.vision_doc_id)
       .single();
     
-    if (!visionDoc) {
+    if (!visionDocRow) {
       return {
         error: 'Vision document not found',
       };
     }
     
+    const visionDoc = visionDocRow.doc;
+    const visionDocId = visionDocRow.id;
+    
     // Load decomposition
     const { data: decomposition } = await supabase
       .from('rp_proposals')
       .select('*')
-      .eq('vision_doc_id', visionDoc.id);
+      .eq('vision_doc_id', visionDocId);
     
     if (!decomposition || decomposition.length === 0) {
       return {
@@ -699,7 +702,7 @@ async function handleStartVision(input: any) {
       // Link RP to vision doc
       await supabase
         .from('rps')
-        .update({ source_vision_doc_id: visionDoc.id })
+        .update({ source_vision_doc_id: visionDocId })
         .eq('id', rp.id);
     }
     
@@ -904,28 +907,31 @@ async function handleApproveVision(input: any) {
   const session = completedSessions[0];
   console.log(`   📝 Found completed session: ${session.id}`);
   
-  // Load vision doc linked to this session
-  const { data: visionDocs, error: visionError } = await supabase
+  // Load vision doc linked to this session (use raw query to get id first)
+  const { data: visionDocRow, error: visionError } = await supabase
     .from('vision_documents')
-    .select('*')
+    .select('id, doc')
     .eq('session_id', session.id)
     .order('created_at', { ascending: false })
-    .limit(1);
+    .limit(1)
+    .single();
   
-  if (visionError || !visionDocs || visionDocs.length === 0) {
+  if (visionError || !visionDocRow) {
     return {
       error: `No vision document found for session ${session.id}`,
     };
   }
   
-  const visionDoc = visionDocs[0];
-  console.log(`   📄 Found vision doc: ${visionDoc.id}`);
+  // Extract the VisionDocument from the doc JSONB field
+  const visionDoc = visionDocRow.doc;
+  const visionDocId = visionDocRow.id;
+  console.log(`   📄 Found vision doc: ${visionDocId}`);
   
   // Load RP proposals
   const { data: proposals, error: proposalsError } = await supabase
     .from('rp_proposals')
     .select('*')
-    .eq('vision_doc_id', visionDoc.id);
+    .eq('vision_doc_id', visionDocId);
   
   if (proposalsError || !proposals || proposals.length === 0) {
     return {
@@ -977,7 +983,7 @@ async function handleApproveVision(input: any) {
   await supabase
     .from('vision_documents')
     .update({ project_id: project.id })
-    .eq('id', visionDoc.id);
+    .eq('id', visionDocId);
   
   // Start the project
   console.log(`   🚀 Starting project...`);
