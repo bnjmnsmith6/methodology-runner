@@ -4,6 +4,7 @@
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import path from 'path';
+import { loadContextPack } from '../../prompts/persistContextPack.js';
 
 const BUILD_SYSTEM_PROMPT = `You are Code Puppy, a build agent executing a Constellation Packet.
 
@@ -43,7 +44,9 @@ export interface PromptAssemblyResult {
 export async function assembleBuildPrompt(
   worktreePath: string,
   constellationPacket: string,
-  jobId: string
+  jobId: string,
+  projectId?: string,
+  rpId?: string
 ): Promise<PromptAssemblyResult> {
   // Ensure .methodology directory exists
   const methodologyDir = path.join(worktreePath, '.methodology');
@@ -56,9 +59,19 @@ export async function assembleBuildPrompt(
   writeFileSync(packetPath, constellationPacket, 'utf-8');
   console.log(`   📄 Wrote constellation packet to: ${packetPath}`);
   
+  // Inject Vision Document context if available
+  let finalSystemPrompt = BUILD_SYSTEM_PROMPT;
+  if (projectId && rpId) {
+    const contextPack = await loadContextPack(projectId, rpId, 'build');
+    if (contextPack) {
+      console.log('   📦 Injecting Vision Document context');
+      finalSystemPrompt = BUILD_SYSTEM_PROMPT + '\n\n---\n\n## Project Context\n\n' + contextPack.renderedText;
+    }
+  }
+  
   // Write system prompt
   const systemPromptPath = path.join(methodologyDir, 'build-system-prompt.md');
-  writeFileSync(systemPromptPath, BUILD_SYSTEM_PROMPT, 'utf-8');
+  writeFileSync(systemPromptPath, finalSystemPrompt, 'utf-8');
   console.log(`   📝 Wrote system prompt to: ${systemPromptPath}`);
   
   // Build the CLI prompt with JSON format requirements embedded

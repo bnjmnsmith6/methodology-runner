@@ -103,7 +103,9 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       const { prompt, systemPromptPath } = await assembleBuildPrompt(
         worktreePath,
         packet,
-        job.id
+        job.id,
+        job.project_id,
+        job.rp_id || undefined
       );
       
       // 6. Start heartbeat

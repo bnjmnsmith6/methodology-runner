@@ -10,6 +10,7 @@ import { callChatCompletion } from './openai-client.js';
 import { PBCA_SYSTEM_PROMPT } from './pbca-system-prompt.js';
 import { buildPbcaUserPrompt, type PbcaPromptInput } from './pbca-prompt-builder.js';
 import { parsePbcaResponse } from './pbca-response-parser.js';
+import { loadContextPack } from '../prompts/persistContextPack.js';
 
 export class RealPbcaAdapter implements AgentAdapter {
   async execute(job: Job): Promise<ExecutionResult> {
@@ -42,7 +43,16 @@ export class RealPbcaAdapter implements AgentAdapter {
         existingArtifacts: job.input.existing_artifacts,
       };
 
-      const userPrompt = buildPbcaUserPrompt(promptInput);
+let userPrompt = buildPbcaUserPrompt(promptInput);
+
+      // Inject Vision Document context if available
+      if (job.project_id && job.rp_id) {
+        const contextPack = await loadContextPack(job.project_id, job.rp_id, 'pbca');
+        if (contextPack) {
+          console.log('   📦 Injecting Vision Document context');
+          userPrompt = contextPack.renderedText + '\n\n---\n\n' + userPrompt;
+        }
+      }
 
       console.log(`   Prompt length: ${userPrompt.length} characters`);
 

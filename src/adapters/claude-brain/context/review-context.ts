@@ -6,6 +6,7 @@ import { ReviewContextPack, ProjectCard } from '../types.js';
 import { Job, JobType } from '../../../core/types.js';
 import { getPriorJobOutput } from './job-context.js';
 import { supabase } from '../../../db/client.js';
+import { loadContextPack } from '../../../prompts/persistContextPack.js';
 
 export async function buildReviewContext(job: Job): Promise<ReviewContextPack> {
   // Get PBCA output
@@ -81,9 +82,18 @@ export async function buildReviewContext(job: Job): Promise<ReviewContextPack> {
     rawPbcaOutput = JSON.stringify(pbcaOutput);
   }
   
+  // Inject Vision Document context if available
+  let visionContext = '';
+  if (job.project_id && job.rp_id) {
+    const contextPack = await loadContextPack(job.project_id, job.rp_id, 'review');
+    if (contextPack) {
+      visionContext = '\n\n---\n\n## Vision Document Context\n\n' + contextPack.renderedText;
+    }
+  }
+  
   return {
     projectCard,
     pbcaSlices,
-    rawPbcaOutput,
+    rawPbcaOutput: rawPbcaOutput + visionContext,
   };
 }
