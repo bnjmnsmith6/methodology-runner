@@ -24,6 +24,11 @@ import { ProjectState, RpState, StepStatus, Step } from '../core/types.js';
 import { supabase } from '../db/client.js';
 import { next as runReducer } from '../core/reducer.js';
 import { enqueueJob } from '../core/scheduler.js';
+import { handleNewIntake, handleIntakeReply, getActiveIntake, getSessionWithMessages } from '../intake/index.js';
+import { buildVisionDocument } from '../vision/index.js';
+import { decomposeProject } from '../decompose/index.js';
+import { generateAndSaveContextPacks } from '../prompts/generateAllContextPacks.js';
+
 
 /**
  * Tool definitions for Claude
@@ -44,7 +49,8 @@ export const ORCHESTRATOR_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'create_project',
-    description: 'Create a new project with a tier. Can optionally create the first RP in the same call to avoid chaining tools. ALWAYS use this to create project + RP in one call when possible.',
+    description: 'Create a new project with a tier (LEGACY). PREFER start_vision for new project requests instead - it runs the full vision conversation. Only use create_project when the user explicitly wants to skip vision or you already have a vision doc approved.',
+
     input_schema: {
       type: 'object',
       properties: {
@@ -183,7 +189,56 @@ export const ORCHESTRATOR_TOOLS: Anthropic.Tool[] = [
       required: ['rp_id'],
     },
   },
-];
+  {
+    name: 'start_vision',
+    description: 'Start the vision conversation to understand what the user wants to build. Call this when the user describes a new project idea or says they want to build something.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        user_message: {
+          type: 'string',
+          description: 'The user\'s project description or idea',
+        },
+      },
+      required: ['user_message'],
+    },
+  },
+  {
+    name: 'continue_vision',
+    description: 'Continue the vision conversation with the user\'s reply. Call this when there is an active vision session and the user is answering questions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: 'The active vision session ID',
+        },
+        user_reply: {
+          type: 'string',
+          description: 'The user\'s reply to the vision question',
+        },
+      },
+      required: ['session_id', 'user_reply'],
+    },
+  },
+  {
+    name: 'approve_vision',
+    description: 'Create the project and RPs from the approved vision. Call this when the user confirms the vision summary and decomposition look good.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        vision_doc_id: {
+          type: 'string',
+          description: 'The vision document ID to approve',
+        },
+        project_name_override: {
+          type: 'string',
+          description: 'Optional: Override the project name if user wants to change it',
+        },
+      },
+      required: ['vision_doc_id'],
+    },
+  }];
 
 /**
  * Handle tool execution
@@ -214,6 +269,16 @@ export async function handleToolCall(toolName: string, toolInput: any): Promise<
       
       case 'get_rp_detail':
         return await handleGetRpDetail(toolInput);
+      
+      
+      case 'start_vision':
+        return await handleStartVision(toolInput);
+      
+      case 'continue_vision':
+        return await handleContinueVision(toolInput);
+      
+      case 'approve_vision':
+        return await handleApproveVision(toolInput);
       
       default:
         return { error: `Unknown tool: ${toolName}` };
@@ -564,5 +629,382 @@ async function handleGetRpDetail(input: any) {
   return {
     rp,
     decisions,
+  };
+}
+
+/**
+ * Vision conversation handlers
+ */
+
+async function handleStartVision(input: any) {
+  console.log('🎯 Starting vision conversation...');
+  const result = await handleNewIntake(input.user_message);
+  
+  if (result.type === 'fast-path') {
+    // Fast-path: Simple request, skip conversation
+    console.log('   ⚡ Fast-path detected - creating project immediately');
+    
+    // The vision doc and decomposition are already built in handleNewIntake
+    // We need to load them and create the project
+    const { data: session } = await supabase
+      .from('intake_sessions')
+      .select('vision_doc_id')
+      .eq('id', result.sessionId)
+      .single();
+    
+    if (!session?.vision_doc_id) {
+      return {
+        error: 'Fast-path session created but vision_doc_id not found',
+      };
+    }
+    
+    // Load vision doc
+    const { data: visionDoc } = await supabase
+      .from('vision_documents')
+      .select('*')
+      .eq('id', session.vision_doc_id)
+      .single();
+    
+    if (!visionDoc) {
+      return {
+        error: 'Vision document not found',
+      };
+    }
+    
+    // Load decomposition
+    const { data: decomposition } = await supabase
+      .from('rp_proposals')
+      .select('*')
+      .eq('vision_doc_id', visionDoc.id);
+    
+    if (!decomposition || decomposition.length === 0) {
+      return {
+        error: 'No decomposition found for vision document',
+      };
+    }
+    
+    // Create project from vision doc
+    const project = await createProjectService({
+      name: visionDoc.intent.project_title,
+      description: visionDoc.intent.one_sentence_brief,
+      tier: Math.max(...decomposition.map((d: any) => d.tier || 3)) as 1 | 2 | 3,
+    });
+    
+    // Create RPs
+    const rpIdMap: Record<string, string> = {};
+    for (const proposal of decomposition) {
+      const rp = await createRpService({
+        project_id: project.id,
+        title: proposal.title,
+        description: proposal.description,
+        tier_override: proposal.tier,
+      });
+      rpIdMap[proposal.title] = rp.id;
+      
+      // Link RP to vision doc
+      await supabase
+        .from('rps')
+        .update({ source_vision_doc_id: visionDoc.id })
+        .eq('id', rp.id);
+    }
+    
+    // Create RP dependencies (if supported by the database)
+    // TODO: Add rp_dependencies table support if needed
+    
+    // Generate context packs
+    await generateAndSaveContextPacks(
+      project.id,
+      visionDoc,
+      decomposition,
+      rpIdMap
+    );
+    
+    // Update vision doc with project_id
+    await supabase
+      .from('vision_documents')
+      .update({ project_id: project.id })
+      .eq('id', visionDoc.id);
+    
+    // Start project
+    await updateProjectState(project.id, ProjectState.ACTIVE);
+    
+    // Enqueue initial jobs (same logic as handleStartProject)
+    const { data: readyRps } = await supabase
+      .from('rps')
+      .select('*')
+      .eq('project_id', project.id)
+      .eq('state', RpState.READY);
+    
+    if (readyRps && readyRps.length > 0) {
+      for (const rp of readyRps) {
+        const nextAction = runReducer(rp, project);
+        
+        if (nextAction.setRpState) {
+          const updates: any = {};
+          if (nextAction.setRpState.state !== undefined) {
+            updates.state = nextAction.setRpState.state;
+          }
+          if (nextAction.setRpState.step !== undefined) {
+            updates.step = nextAction.setRpState.step;
+          }
+          if (nextAction.setRpState.step_status !== undefined) {
+            updates.step_status = nextAction.setRpState.step_status;
+          }
+          await updateRpState(rp.id, updates);
+        }
+        
+        if (nextAction.enqueueJobs && nextAction.enqueueJobs.length > 0) {
+          for (const job of nextAction.enqueueJobs) {
+            await enqueueJob(job);
+          }
+        }
+      }
+    }
+    
+    return {
+      status: 'fast_path_created',
+      projectId: project.id,
+      projectName: project.name,
+      rpCount: decomposition.length,
+      message: `Fast-tracked! Created project "${project.name}" with ${decomposition.length} RP(s) and started it. The worker is now processing.`,
+    };
+  } else {
+    // Conversation path: Ask first question
+    return {
+      status: 'asking',
+      sessionId: result.sessionId,
+      message: result.message,
+      quickOptions: result.quickOptions,
+    };
+  }
+}
+
+async function handleContinueVision(input: any) {
+  console.log(`🎯 Continuing vision conversation (session: ${input.session_id})...`);
+  
+  const result = await handleIntakeReply(input.session_id, input.user_reply);
+  
+  if (result.visionSessionComplete) {
+    // Session complete - build vision doc and decompose
+    console.log('   ✅ Vision conversation complete - building vision doc...');
+    
+    const { session, messages } = await getSessionWithMessages(input.session_id);
+    
+    // Build vision document
+    const visionDoc = await buildVisionDocument(session, messages, session.coverage);
+    
+    // Save vision doc
+    const { data: savedVisionDoc, error: visionError } = await supabase
+      .from('vision_documents')
+      .insert({
+        session_id: session.id,
+        version: visionDoc.version,
+        status: visionDoc.status,
+        confidence: visionDoc.confidence,
+        source: visionDoc.source,
+        classification: visionDoc.classification,
+        intent: visionDoc.intent,
+        users: visionDoc.users,
+        current_state: visionDoc.current_state,
+        done_definition: visionDoc.done_definition,
+        constraints: visionDoc.constraints,
+        decisions_made: visionDoc.decisions_made,
+        risk_register: visionDoc.risk_register,
+        decomposition_hints: visionDoc.decomposition_hints,
+        downstream_context: visionDoc.downstream_context,
+      })
+      .select()
+      .single();
+    
+    if (visionError || !savedVisionDoc) {
+      return {
+        error: `Failed to save vision document: ${visionError?.message}`,
+      };
+    }
+    
+    // Link session to vision doc
+    await supabase
+      .from('intake_sessions')
+      .update({ vision_doc_id: savedVisionDoc.id })
+      .eq('id', session.id);
+    
+    // Decompose project
+    console.log('   🔍 Decomposing into RPs...');
+    const decomposition = await decomposeProject(savedVisionDoc);
+    
+    // Save RP proposals
+    const savedProposals = [];
+    for (const proposal of decomposition.proposals) {
+      const { data: savedProposal, error: proposalError } = await supabase
+        .from('rp_proposals')
+        .insert({
+          vision_doc_id: savedVisionDoc.id,
+          title: proposal.title,
+          description: proposal.description,
+          tier: proposal.tier,
+          dependencies: proposal.dependencies,
+          rationale: proposal.rationale,
+          pbca_focus: proposal.pbca_focus,
+        })
+        .select()
+        .single();
+      
+      if (!proposalError && savedProposal) {
+        savedProposals.push(savedProposal);
+      }
+    }
+    
+    // Format summary for user
+    const summary = `## ${savedVisionDoc.intent.project_title}
+
+${savedVisionDoc.intent.one_sentence_brief}
+
+**Complexity:** ${savedVisionDoc.classification.complexity}
+**Confidence:** ${Math.round(savedVisionDoc.confidence * 100)}%
+
+### What Success Looks Like
+${savedVisionDoc.done_definition.success_criteria.map((c: string, i: number) => `${i + 1}. ${c}`).join('\n')}
+
+### What's Out of Scope
+${savedVisionDoc.done_definition.out_of_scope.map((s: string) => `- ${s}`).join('\n')}`;
+    
+    const decompositionText = decomposition.userSummary;
+    
+    return {
+      status: 'ready_to_create',
+      visionDocId: savedVisionDoc.id,
+      summary,
+      decomposition: decompositionText,
+      proposalCount: savedProposals.length,
+      message: `${summary}\n\n---\n\n${decompositionText}\n\nLooks good? Say "yes" or "approve" to create the project, or tell me what to change.`,
+    };
+  } else {
+    // More questions
+    return {
+      status: 'asking',
+      sessionId: input.session_id,
+      message: result.message,
+      quickOptions: result.quickOptions,
+    };
+  }
+}
+
+async function handleApproveVision(input: any) {
+  console.log(`✅ Approving vision doc: ${input.vision_doc_id}`);
+  
+  // Load vision doc
+  const { data: visionDoc, error: visionError } = await supabase
+    .from('vision_documents')
+    .select('*')
+    .eq('id', input.vision_doc_id)
+    .single();
+  
+  if (visionError || !visionDoc) {
+    return {
+      error: `Vision document not found: ${input.vision_doc_id}`,
+    };
+  }
+  
+  // Load RP proposals
+  const { data: proposals, error: proposalsError } = await supabase
+    .from('rp_proposals')
+    .select('*')
+    .eq('vision_doc_id', visionDoc.id);
+  
+  if (proposalsError || !proposals || proposals.length === 0) {
+    return {
+      error: 'No RP proposals found for this vision document',
+    };
+  }
+  
+  // Determine max tier
+  const maxTier = Math.max(...proposals.map((p: any) => p.tier || 3)) as 1 | 2 | 3;
+  
+  // Create project
+  const projectName = input.project_name_override || visionDoc.intent.project_title;
+  const project = await createProjectService({
+    name: projectName,
+    description: visionDoc.intent.one_sentence_brief,
+    tier: maxTier,
+  });
+  
+  console.log(`   📦 Created project: ${project.name} (${project.id})`);
+  
+  // Create RPs
+  const rpIdMap: Record<string, string> = {};
+  for (const proposal of proposals) {
+    const rp = await createRpService({
+      project_id: project.id,
+      title: proposal.title,
+      description: proposal.description,
+      tier_override: proposal.tier,
+    });
+    
+    rpIdMap[proposal.title] = rp.id;
+    
+    // Link RP to vision doc
+    await supabase
+      .from('rps')
+      .update({ source_vision_doc_id: visionDoc.id })
+      .eq('id', rp.id);
+    
+    console.log(`   📝 Created RP: ${proposal.title} (Tier ${proposal.tier})`);
+  }
+  
+  // TODO: Create RP dependencies when rp_dependencies table is available
+  
+  // Generate context packs for all RPs
+  console.log(`   📦 Generating context packs...`);
+  await generateAndSaveContextPacks(project.id, visionDoc, proposals, rpIdMap);
+  
+  // Update vision doc with project_id
+  await supabase
+    .from('vision_documents')
+    .update({ project_id: project.id })
+    .eq('id', visionDoc.id);
+  
+  // Start the project
+  console.log(`   🚀 Starting project...`);
+  await updateProjectState(project.id, ProjectState.ACTIVE);
+  
+  // Enqueue initial jobs for all READY RPs
+  const { data: readyRps } = await supabase
+    .from('rps')
+    .select('*')
+    .eq('project_id', project.id)
+    .eq('state', RpState.READY);
+  
+  if (readyRps && readyRps.length > 0) {
+    for (const rp of readyRps) {
+      const nextAction = runReducer(rp, project);
+      
+      if (nextAction.setRpState) {
+        const updates: any = {};
+        if (nextAction.setRpState.state !== undefined) {
+          updates.state = nextAction.setRpState.state;
+        }
+        if (nextAction.setRpState.step !== undefined) {
+          updates.step = nextAction.setRpState.step;
+        }
+        if (nextAction.setRpState.step_status !== undefined) {
+          updates.step_status = nextAction.setRpState.step_status;
+        }
+        await updateRpState(rp.id, updates);
+      }
+      
+      if (nextAction.enqueueJobs && nextAction.enqueueJobs.length > 0) {
+        for (const job of nextAction.enqueueJobs) {
+          await enqueueJob(job);
+        }
+      }
+    }
+  }
+  
+  return {
+    status: 'created',
+    projectId: project.id,
+    projectName: project.name,
+    rpCount: proposals.length,
+    message: `✅ Created project "${project.name}" with ${proposals.length} RP(s). The worker is now processing. I'll notify you when decisions need your input.`,
   };
 }
