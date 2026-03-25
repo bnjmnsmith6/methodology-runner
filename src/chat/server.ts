@@ -49,6 +49,7 @@ export async function startChatServer(port: number = 3000): Promise<void> {
       // MIDDLEWARE: Check for active vision session BEFORE going to orchestrator
       // This prevents the orchestrator from calling start_vision on every message
       const activeSession = await getActiveIntake();
+      console.log(`   🔍 Middleware: Active session check result: active=${activeSession.active}, sessionId=${activeSession.sessionId || 'none'}`);
       if (activeSession.active && activeSession.sessionId) {
         console.log(`   🔄 Active vision session detected: ${activeSession.sessionId}`);
         console.log(`   ➡️  Bypassing orchestrator, calling continue_vision directly`);
@@ -64,6 +65,7 @@ export async function startChatServer(port: number = 3000): Promise<void> {
         // If session is complete, build Vision Doc and decompose
         if (intakeResponse.visionSessionComplete && intakeResponse.type === 'ready') {
           console.log(`   🎉 Vision session completed! Building Vision Document...`);
+          console.log(`   📝 Session should now be status='completed' in database`);
           
           try {
             // Load session with messages

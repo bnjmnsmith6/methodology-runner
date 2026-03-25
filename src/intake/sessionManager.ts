@@ -93,9 +93,11 @@ export async function updateSessionState(
  * Mark session as completed
  */
 export async function completeSession(sessionId: string): Promise<void> {
+  console.log(`   🏁 Completing session: ${sessionId}`);
   await updateVisionSession(sessionId, {
     status: 'completed',
   });
+  console.log(`   ✅ Session ${sessionId} marked as COMPLETED in database`);
 }
 
 /**

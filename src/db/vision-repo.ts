@@ -120,11 +120,13 @@ export async function getActiveSessionForUser(): Promise<VisionSession | null> {
   if (error) {
     if (error.code === 'PGRST116') {
       // No rows returned
+      console.log('   🔍 getActiveSessionForUser: No active sessions found (all completed/abandoned)');
       return null;
     }
     throw new Error(`Failed to get active session: ${extractSupabaseError(error)}`);
   }
 
+  console.log(`   🔍 getActiveSessionForUser: Found active session ${data.id} (status: ${data.status})`);
   return data as VisionSession;
 }
 
