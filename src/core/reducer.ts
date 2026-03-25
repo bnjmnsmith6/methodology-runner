@@ -1,0 +1,362 @@
+/**
+ * Pure state machine reducer
+ * 
+ * Given current RP and project state, determines what should happen next.
+ * This is pure logic with no side effects - fully testable.
+ */
+
+import {
+  Rp,
+  Project,
+  NextAction,
+  Step,
+  RpState,
+  StepStatus,
+  JobType,
+  STEP_TO_JOB_MAP,
+  MANUAL_STEPS,
+  DecisionScope,
+} from './types.js';
+
+/**
+ * The core reducer - pure function, no side effects
+ * 
+ * Returns what should happen next based on current state.
+ */
+export function next(rp: Rp, project: Project): NextAction {
+  // If RP is blocked waiting for decision, do nothing
+  if (rp.state === RpState.WAITING_DECISION) {
+    return {};
+  }
+  
+  // If RP is already in terminal state, do nothing
+  if (rp.state === RpState.COMPLETED || rp.state === RpState.FAILED || rp.state === RpState.CANCELED) {
+    return {};
+  }
+  
+  // Determine effective tier
+  const effectiveTier = rp.tier_override ?? project.tier;
+  const currentStep = rp.step;
+  const currentStatus = rp.step_status;
+  
+  // ========================================================================
+  // STEP COMPLETION LOGIC - Current step is DONE
+  // ========================================================================
+  
+  if (currentStatus === StepStatus.DONE) {
+    console.log(`   🔄 Reducer: Step ${currentStep} is DONE`);
+    // Step 10 (SHIP) complete -> RP is COMPLETED
+    if (currentStep === Step.SHIP) {
+      return {
+        setRpState: {
+          state: RpState.COMPLETED,
+        },
+      };
+    }
+    // Step 8 (TEST) complete with DONE -> Test passed, skip DEBUG (go to SHIP)
+    if (currentStep === Step.TEST) {
+      return {
+        setRpState: {
+          step: Step.SHIP,
+          step_status: StepStatus.NOT_STARTED,
+        },
+      };
+    }
+
+    
+    // Step 9 (DEBUG) complete -> Loop back to step 8 (TEST)
+    if (currentStep === Step.DEBUG) {
+      return {
+        setRpState: {
+          step: Step.TEST,
+          step_status: StepStatus.NOT_STARTED,
+        },
+      };
+    }
+    
+    // Tier-based skipping on step completion
+    // Tier 3: Skip research (step 3) and review (step 4)
+    if (effectiveTier === 3 && currentStep === Step.DECOMPOSE) {
+      return {
+        setRpState: {
+          step: Step.SPEC,
+          step_status: StepStatus.NOT_STARTED,
+        },
+      };
+    }
+    
+    // Tier 2: Still do research but abbreviated
+    // No special skipping needed, just advance normally
+    
+    // Normal advancement: current step done -> next step not started
+    const nextStep = currentStep + 1;
+    console.log(`   ➡️  Reducer: Advancing from step ${currentStep} to step ${nextStep}`);
+    return {
+      setRpState: {
+        step: currentStep + 1,
+        step_status: StepStatus.NOT_STARTED,
+      },
+    };
+  }
+  
+  // ========================================================================
+  // ERROR HANDLING - Current step has ERROR status
+  // ========================================================================
+  
+  if (currentStatus === StepStatus.ERROR) {
+    // If we're at step 8 (TEST) and it failed, enter debug loop
+    if (currentStep === Step.TEST) {
+      // Check if we've exceeded max debug cycles
+      if (rp.debug_cycle_count >= rp.max_debug_cycles) {
+        // Escalate - create decision for human intervention
+        return {
+          createDecision: {
+            project_id: rp.project_id,
+            rp_id: rp.id,
+            scope: DecisionScope.RP,
+            title: `RP exceeded max debug cycles (${rp.max_debug_cycles})`,
+            prompt: `The RP "${rp.title}" has failed testing ${rp.debug_cycle_count} times and exceeded the maximum debug cycle limit.\n\nLast error: ${rp.last_error || 'Unknown'}\n\nWhat would you like to do?`,
+            options: [
+              'Continue debugging (increase cycle limit)',
+              'Skip to manual fix',
+              'Cancel this RP',
+              'Mark as completed anyway',
+            ],
+            context: {
+              rp_id: rp.id,
+              debug_cycle_count: rp.debug_cycle_count,
+              max_debug_cycles: rp.max_debug_cycles,
+              last_error: rp.last_error,
+            },
+          },
+          setRpState: {
+            state: RpState.WAITING_DECISION,
+          },
+        };
+      }
+      
+      // Enter debug loop: increment cycle count and go to step 9
+      return {
+        setRpState: {
+          step: Step.DEBUG,
+          step_status: StepStatus.NOT_STARTED,
+          incrementDebugCycle: true,
+        },
+      };
+    }
+    
+    // For other steps with ERROR, we'd typically retry or escalate
+    // For now, create a decision
+    return {
+      createDecision: {
+        project_id: rp.project_id,
+        rp_id: rp.id,
+        scope: DecisionScope.RP,
+        title: `Step ${currentStep} failed`,
+        prompt: `Step ${currentStep} of RP "${rp.title}" failed with error:\n\n${rp.last_error || 'Unknown error'}\n\nWhat would you like to do?`,
+        options: [
+          'Retry the step',
+          'Skip this step',
+          'Cancel the RP',
+        ],
+        context: {
+          rp_id: rp.id,
+          step: currentStep,
+          error: rp.last_error,
+        },
+      },
+      setRpState: {
+        state: RpState.WAITING_DECISION,
+      },
+    };
+  }
+  
+  // ========================================================================
+  // STEP INITIATION - Current step is NOT_STARTED
+  // ========================================================================
+  
+  if (currentStatus === StepStatus.NOT_STARTED) {
+    // Tier-based skipping at step start
+    // Tier 3: Skip research (step 3) and review (step 4)
+    if (effectiveTier === 3 && (currentStep === Step.RESEARCH || currentStep === Step.REVIEW)) {
+      return {
+        setRpState: {
+          step_status: StepStatus.SKIPPED,
+        },
+      };
+    }
+    
+    // Manual steps (VISION, DECOMPOSE, TEST) don't auto-enqueue jobs
+    // They wait for human interaction
+    if (MANUAL_STEPS.includes(currentStep)) {
+      return {
+        setRpState: {
+          state: RpState.WAITING_TEST, // Special state for test phase
+        },
+      };
+    }
+    
+    // Get the job type for this step
+    const jobType = STEP_TO_JOB_MAP[currentStep];
+    
+    if (!jobType) {
+      // No job type mapped for this step (shouldn't happen)
+      console.error(`No job type mapped for step ${currentStep}`);
+      return {};
+    }
+    
+    // Build job input based on step and tier
+    const jobInput = buildJobInput(rp, project, currentStep, effectiveTier);
+    
+    // Enqueue the job and mark step as IN_PROGRESS
+    return {
+      enqueueJobs: [{
+        project_id: rp.project_id,
+        rp_id: rp.id,
+        type: jobType,
+        priority: rp.priority,
+        input: jobInput,
+      }],
+      setRpState: {
+        step_status: StepStatus.IN_PROGRESS,
+        state: RpState.RUNNING,
+      },
+    };
+  }
+  
+  // ========================================================================
+  // IN_PROGRESS - Job is running, wait for completion
+  // ========================================================================
+  
+  if (currentStatus === StepStatus.IN_PROGRESS) {
+    // Worker will update status when job completes
+    return {};
+  }
+  
+  // ========================================================================
+  // SKIPPED - Advance to next step
+  // ========================================================================
+  
+  if (currentStatus === StepStatus.SKIPPED) {
+    return {
+      setRpState: {
+        step: currentStep + 1,
+        step_status: StepStatus.NOT_STARTED,
+      },
+    };
+  }
+  
+  // Default: no action
+  return {};
+}
+
+/**
+ * Build job input based on step, tier, and context
+ */
+function buildJobInput(
+  rp: Rp,
+  project: Project,
+  step: number,
+  tier: number
+): Record<string, any> {
+  const baseContext = {
+    rp_title: rp.title,
+    rp_description: rp.description || '',
+    project_name: project.name,
+    project_tier: tier,
+  };
+  
+  switch (step) {
+    case Step.RESEARCH:
+      return {
+        ...baseContext,
+        abbreviated: tier === 2, // Tier 2 gets abbreviated research
+      };
+    
+    case Step.REVIEW:
+      return {
+        ...baseContext,
+        // Context builder will load PBCA output from database
+
+      };
+    
+    case Step.SPEC:
+      return {
+        ...baseContext,
+        // Context builder will load review output and decisions from database
+      };
+    
+    case Step.BUILD:
+      return {
+        ...baseContext,
+        // Context builder will load constellation packet from database
+        repo_path: `/tmp/rp-${rp.id}`,
+      };
+    
+    case Step.SMOKE:
+      return {
+        repo_path: `/tmp/rp-${rp.id}`,
+        test_command: 'npm test',
+      };
+    
+    case Step.DEBUG:
+      return {
+        ...baseContext,
+        // Pass error log from failed job
+        // Context builder will load spec and prior debug attempts from database
+        error_log: rp.last_error || 'Unknown error',
+      };
+    
+    case Step.SHIP:
+      return {
+        rp_id: rp.id,
+        artifacts: [],
+      };
+    
+    default:
+      return baseContext;
+  }
+}
+
+/**
+ * Build job input for BUILD step - needs to fetch prior spec output
+ */
+async function buildBuildJobInput(
+  rp: Rp,
+  project: Project,
+  tier: number
+): Promise<Record<string, any>> {
+  // Import at function level to avoid circular dependency
+  const { getPriorJobOutput } = await import('../adapters/claude-brain/context/job-context.js');
+  const { JobType } = await import('./types.js');
+  
+  const baseContext = {
+    rp_title: rp.title,
+    rp_description: rp.description || '',
+    project_name: project.name,
+    project_tier: tier,
+    repo_path: null, // Let adapter use default
+    session_id: null
+  };
+  
+  // Get constellation packet from CLAUDE_SPEC output
+  const specOutput = await getPriorJobOutput(rp.id, JobType.CLAUDE_SPEC);
+  
+  if (!specOutput) {
+    console.warn('   ⚠️  No CLAUDE_SPEC output found - BUILD will fail');
+    return baseContext;
+  }
+  
+  // Extract constellation packet from spec output
+  let constellationPacket = '';
+  if (specOutput.artifacts && specOutput.artifacts.length > 0) {
+    constellationPacket = specOutput.artifacts[0].content;
+  } else if (specOutput.text) {
+    constellationPacket = specOutput.text;
+  }
+  
+  return {
+    ...baseContext,
+    constellation_packet: constellationPacket
+  };
+}

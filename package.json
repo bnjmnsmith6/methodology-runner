@@ -1,0 +1,45 @@
+{
+  "name": "methodology-runner",
+  "version": "0.1.0",
+  "description": "Workflow orchestration engine for multi-agent methodology execution",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "worker": "tsx src/worker-only.ts",
+    "migrate": "tsx src/db/migrate.ts",
+    "status": "tsx scripts/status.ts",
+    "create-rp": "tsx scripts/create-rp.ts",
+    "advance-rp": "tsx scripts/advance-rp.ts",
+    "trigger-reducer": "tsx scripts/trigger-reducer.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "workflow",
+    "orchestration",
+    "constellation",
+    "methodology"
+  ],
+  "author": "Ben",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.1",
+    "@supabase/supabase-js": "^2.45.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "openai": "^4.73.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

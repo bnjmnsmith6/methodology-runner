@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐶 Methodology Runner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    header p {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin-top: 0.25rem;
+    }
+    
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .message {
+      display: flex;
+      gap: 0.75rem;
+      max-width: 80%;
+    }
+    
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.25rem;
+    }
+    
+    .message.user .message-avatar {
+      background: #667eea;
+    }
+    
+    .message.assistant .message-avatar {
+      background: #764ba2;
+    }
+    
+    .message-content {
+      background: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      line-height: 1.5;
+    }
+    
+    .message.user .message-content {
+      background: #667eea;
+      color: white;
+    }
+    
+    .message.assistant .message-content {
+      background: white;
+      color: #333;
+    }
+    
+    .tool-call {
+      background: #f0f4ff;
+      border-left: 3px solid #667eea;
+      padding: 0.5rem 0.75rem;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+    
+    .tool-call strong {
+      color: #667eea;
+    }
+    
+    #input-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    #message-input {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    #message-input:focus {
+      border-color: #667eea;
+    }
+    
+    #send-button {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    
+    #send-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+    
+    #send-button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    #send-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .typing-indicator {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.5rem 0;
+    }
+    
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+      animation: typing 1.4s infinite;
+    }
+    
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+      0%, 60%, 100% {
+        opacity: 0.3;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-4px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🐶 Methodology Runner</h1>
+    <p>AI-powered workflow orchestrator • Your autonomous development assistant</p>
+  </header>
+  
+  <main>
+    <div id="messages">
+      <div class="message assistant">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          Hey! I'm your orchestrator. I manage the entire 10-step methodology workflow for you. Just tell me what you want to build and I'll handle the rest!
+          <br><br>
+          Try: "What's the status?" or "Start a new project for [feature], tier 2"
+        </div>
+      </div>
+    </div>
+    
+    <div id="input-container">
+      <input 
+        type="text" 
+        id="message-input" 
+        placeholder="Type your message..." 
+        autocomplete="off"
+      />
+      <button id="send-button">Send</button>
+    </div>
+  </main>
+  
+  <script>
+    const messagesDiv = document.getElementById('messages');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    
+    let conversationHistory = [];
+    let isProcessing = false;
+    
+    // Send message
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || isProcessing) return;
+      
+      // Add user message to UI
+      addMessage('user', message);
+      messageInput.value = '';
+      isProcessing = true;
+      sendButton.disabled = true;
+      
+      // Add typing indicator
+      const typingDiv = addMessage('assistant', '', true);
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'typing-indicator';
+      typingIndicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+      typingDiv.appendChild(typingIndicator);
+      
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            conversationHistory,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Chat request failed');
+        }
+        
+        // Remove typing indicator
+        typingDiv.innerHTML = '';
+        
+        // Handle SSE stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let assistantContent = '';
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'text') {
+                assistantContent += data.content;
+                typingDiv.textContent = assistantContent;
+              } else if (data.type === 'tool_use') {
+                const toolDiv = document.createElement('div');
+                toolDiv.className = 'tool-call';
+                toolDiv.innerHTML = `<strong>🔧 ${data.name}</strong>`;
+                typingDiv.appendChild(toolDiv);
+              } else if (data.type === 'done') {
+                // Update conversation history
+                conversationHistory.push(
+                  { role: 'user', content: message },
+                  { role: 'assistant', content: data.assistant_message.content }
+                );
+              }
+            }
+          }
+        }
+        
+        // Scroll to bottom
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+      } catch (err) {
+        typingDiv.innerHTML = `<span style="color: red;">Error: ${err.message}</span>`;
+      } finally {
+        isProcessing = false;
+        sendButton.disabled = false;
+        messageInput.focus();
+      }
+    }
+    
+    // Add message to UI
+    function addMessage(role, content, returnDiv = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = role === 'user' ? '👤' : '🤖';
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      contentDiv.textContent = content;
+      
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(contentDiv);
+      messagesDiv.appendChild(messageDiv);
+      
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      
+      return returnDiv ? contentDiv : messageDiv;
+    }
+    
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+    
+    // Focus input on load
+    messageInput.focus();
+  </script>
+</body>
+</html>
