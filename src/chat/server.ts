@@ -8,7 +8,10 @@ import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { ORCHESTRATOR_SYSTEM_PROMPT } from './system-prompt.js';
 import { ORCHESTRATOR_TOOLS, handleToolCall } from './tools.js';
-import { getActiveIntake, handleIntakeReply } from '../intake/index.js';
+import { getActiveIntake, handleIntakeReply, getSessionWithMessages } from '../intake/index.js';
+import { buildVisionDocument, saveVisionDocument } from '../vision/index.js';
+import { decomposeProject } from '../decompose/index.js';
+import { supabase } from '../db/client.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -53,39 +56,82 @@ export async function startChatServer(port: number = 3000): Promise<void> {
         // Call handleIntakeReply directly (bypasses orchestrator)
         const intakeResponse = await handleIntakeReply(activeSession.sessionId, message);
         
-        // Format the response as a markdown message
-        let responseText = intakeResponse.message;
-        
-        if (intakeResponse.quickOptions && intakeResponse.quickOptions.length > 0) {
-          responseText += '\n\n**Quick options:**\n' + intakeResponse.quickOptions.map(opt => `• ${opt}`).join('\n');
-        }
-        
         // Set up SSE (Server-Sent Events)
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         
-        // Stream the response
-        res.write(`data: ${JSON.stringify({ type: 'text', content: responseText })}\n\n`);
+        // If session is complete, build Vision Doc and decompose
+        if (intakeResponse.visionSessionComplete && intakeResponse.type === 'ready') {
+          console.log(`   🎉 Vision session completed! Building Vision Document...`);
+          
+          try {
+            // Load session with messages
+            const { session, messages } = await getSessionWithMessages(activeSession.sessionId);
+            
+            // Build Vision Document (needs coverage from session)
+            const visionDoc = await buildVisionDocument(session, messages, session.coverage);
+            console.log(`   📝 Vision Document built: ${visionDoc.intent.project_title}`);
+            
+            // Save Vision Document
+            const { id: visionDocId } = await saveVisionDocument(activeSession.sessionId, visionDoc);
+            console.log(`   💾 Vision Document saved: ${visionDocId}`);
+            
+            // Decompose project
+            const decomposition = await decomposeProject(visionDoc);
+            console.log(`   🔨 Decomposed into ${decomposition.proposals.length} RPs`);
+            
+            // Save RP proposals
+            for (const proposal of decomposition.proposals) {
+              await supabase
+                .from('rp_proposals')
+                .insert({
+                  vision_doc_id: visionDocId,
+                  title: proposal.title,
+                  description: proposal.description,
+                  tier: proposal.tier,
+                  dependencies: proposal.dependencies || [],
+                  // estimated_complexity not in RPProposal type
+                });
+            }
+            console.log(`   💾 Saved ${decomposition.proposals.length} RP proposals`);
+            
+            // Format summary for user
+            const summary = formatVisionSummary(visionDoc, decomposition);
+            
+            // Stream the formatted summary
+            res.write(`data: ${JSON.stringify({ type: 'text', content: summary })}\n\n`);
+            
+          } catch (error) {
+            console.error('   ❌ Error building vision/decomposition:', error);
+            const errorMessage = `I encountered an error building the vision document: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            res.write(`data: ${JSON.stringify({ type: 'text', content: errorMessage })}\n\n`);
+          }
+          
+        } else {
+          // Normal conversation response (not complete yet)
+          let responseText = intakeResponse.message;
+          
+          if (intakeResponse.quickOptions && intakeResponse.quickOptions.length > 0) {
+            responseText += '\n\n**Quick options:**\n' + intakeResponse.quickOptions.map(opt => `• ${opt}`).join('\n');
+          }
+          
+          // Stream the response
+          res.write(`data: ${JSON.stringify({ type: 'text', content: responseText })}\n\n`);
+        }
         
-        // Send done event with simplified message structure
+        // Send done event
         const doneMessage = {
           type: 'done',
           assistant_message: {
             role: 'assistant',
-            content: [{ type: 'text', text: responseText }],
+            content: [{ type: 'text', text: 'Vision response sent' }],
           },
         };
         res.write(`data: ${JSON.stringify(doneMessage)}\n\n`);
         res.end();
         
         console.log(`   ✅ Vision session response sent (type: ${intakeResponse.type})`);
-        console.log(`   📊 Session complete: ${intakeResponse.visionSessionComplete}`);
-        
-        if (intakeResponse.visionSessionComplete) {
-          console.log(`   🎉 Vision session completed! Ready for approval.`);
-        }
-        
         return;
       }
       
@@ -202,4 +248,51 @@ export async function startChatServer(port: number = 3000): Promise<void> {
     console.log(`\n✅ Chat server listening on http://localhost:${port}`);
     console.log(`   Open your browser to start chatting with the orchestrator\n`);
   });
+}
+
+/**
+ * Format vision summary and decomposition for user approval
+ */
+function formatVisionSummary(visionDoc: any, decomposition: any): string {
+  const { intent, success_criteria, out_of_scope } = visionDoc;
+  
+  let summary = `## 📋 ${intent.project_title}\n\n`;
+  summary += `**🎯 Goal:** ${intent.one_sentence_brief}\n\n`;
+  
+  if (intent.user_problem_statement) {
+    summary += `**❓ Problem:** ${intent.user_problem_statement}\n\n`;
+  }
+  
+  if (success_criteria && success_criteria.length > 0) {
+    summary += `**✅ Done when:**\n`;
+    success_criteria.forEach((criterion: any) => {
+      summary += `- ${criterion.description}\n`;
+    });
+    summary += `\n`;
+  }
+  
+  if (out_of_scope && out_of_scope.length > 0) {
+    summary += `**🚫 Out of scope:**\n`;
+    out_of_scope.forEach((item: any) => {
+      summary += `- ${item.what_to_exclude}\n`;
+    });
+    summary += `\n`;
+  }
+  
+  summary += `---\n\n`;
+  summary += `### 🔨 I'll break this into ${decomposition.proposals.length} parts:\n\n`;
+  
+  decomposition.proposals.forEach((rp: any, index: number) => {
+    summary += `${index + 1}. **${rp.title}** (Tier ${rp.tier})\n`;
+    summary += `   ${rp.description}\n\n`;
+  });
+  
+  if (decomposition.buildOrder && decomposition.buildOrder.length > 0) {
+    summary += `**📅 Build order:** ${decomposition.buildOrder.join(' → ')}\n\n`;
+  }
+  
+  summary += `---\n\n`;
+  summary += `**Say "yes" to start, or tell me what to change.**`;
+  
+  return summary;
 }

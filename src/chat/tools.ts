@@ -223,20 +223,15 @@ export const ORCHESTRATOR_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: 'approve_vision',
-    description: 'Create the project and RPs from the approved vision. Call this when the user confirms the vision summary and decomposition look good.',
+    description: 'Create the project and RPs from the approved vision. Call this when the user confirms the vision summary with "yes", "approve", "looks good", etc. Automatically finds the most recent vision session.',
     input_schema: {
       type: 'object',
       properties: {
-        vision_doc_id: {
-          type: 'string',
-          description: 'The vision document ID to approve',
-        },
         project_name_override: {
           type: 'string',
           description: 'Optional: Override the project name if user wants to change it',
         },
       },
-      required: ['vision_doc_id'],
     },
   }];
 
@@ -890,20 +885,41 @@ ${savedVisionDoc.done_definition.out_of_scope.map((s: string) => `- ${s}`).join(
 }
 
 async function handleApproveVision(input: any) {
-  console.log(`✅ Approving vision doc: ${input.vision_doc_id}`);
+  console.log(`✅ Approving vision from most recent session...`);
   
-  // Load vision doc
-  const { data: visionDoc, error: visionError } = await supabase
-    .from('vision_documents')
+  // Find the most recent completed vision session
+  const { data: completedSessions, error: sessionError } = await supabase
+    .from('vision_sessions')
     .select('*')
-    .eq('id', input.vision_doc_id)
-    .single();
+    .eq('status', 'completed')
+    .order('updated_at', { ascending: false })
+    .limit(1);
   
-  if (visionError || !visionDoc) {
+  if (sessionError || !completedSessions || completedSessions.length === 0) {
     return {
-      error: `Vision document not found: ${input.vision_doc_id}`,
+      error: 'No completed vision session found. Please complete a vision conversation first.',
     };
   }
+  
+  const session = completedSessions[0];
+  console.log(`   📝 Found completed session: ${session.id}`);
+  
+  // Load vision doc linked to this session
+  const { data: visionDocs, error: visionError } = await supabase
+    .from('vision_documents')
+    .select('*')
+    .eq('session_id', session.id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  
+  if (visionError || !visionDocs || visionDocs.length === 0) {
+    return {
+      error: `No vision document found for session ${session.id}`,
+    };
+  }
+  
+  const visionDoc = visionDocs[0];
+  console.log(`   📄 Found vision doc: ${visionDoc.id}`);
   
   // Load RP proposals
   const { data: proposals, error: proposalsError } = await supabase
