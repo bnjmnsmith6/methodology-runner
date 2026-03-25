@@ -88,6 +88,7 @@ Given the conversation history and the new message, extract:
    Return: {"detected": true/false, "description": "what changed"}
 
 3. START_NOW: Does the user want to skip further questions and start building?
+   Detect phrases like: "start now", "just go", "just start", "enough", "begin", "go ahead", "let's go"
    Return: {"detected": true/false}
 
 Respond ONLY with JSON in this exact format:
@@ -103,6 +104,12 @@ User says "For customer support agents"
 Response: {"field_updates": {"target_user": "customer support agents"}, "pivot": {"detected": false, "description": ""}, "start_now": {"detected": false}}
 
 User says "Just start now"
+Response: {"field_updates": {}, "pivot": {"detected": false, "description": ""}, "start_now": {"detected": true}}
+
+User says "just go"
+Response: {"field_updates": {}, "pivot": {"detected": false, "description": ""}, "start_now": {"detected": true}}
+
+User says "enough, let's begin"
 Response: {"field_updates": {}, "pivot": {"detected": false, "description": ""}, "start_now": {"detected": true}}
 
 User says "Actually, nevermind the dashboard, let's build an API instead"
@@ -160,9 +167,33 @@ function fallbackReplyProcessing(
 ): ProcessedReply {
   const lower = message.toLowerCase();
   
-  // Detect "start now" signals
-  const startNowKeywords = ['start', 'go', 'build', 'enough', 'begin', 'just do it', 'proceed'];
-  const userWantsToStart = startNowKeywords.some(kw => lower.includes(kw));
+  // Detect "start now" signals - be aggressive to catch user intent
+  const startNowKeywords = [
+    'start now',
+    'just go',
+    'just start',
+    'just build',
+    'just do',
+    'enough',
+    'begin',
+    'proceed',
+    'go ahead',
+    "let's go",
+    "let's start",
+    "let's begin",
+    'start',
+    'go',
+  ];
+  
+  // Check for exact phrase matches first (higher confidence)
+  let userWantsToStart = startNowKeywords.some(kw => lower.includes(kw));
+  
+  // Also check for single-word commands that strongly indicate starting
+  const singleWordStart = ['start', 'go', 'begin', 'proceed'];
+  const trimmedLower = lower.trim();
+  if (singleWordStart.includes(trimmedLower)) {
+    userWantsToStart = true;
+  }
   
   // Detect pivot signals (changing direction)
   const pivotKeywords = ['actually', 'nevermind', 'instead', 'wait', 'change', 'different'];

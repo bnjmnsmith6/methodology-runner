@@ -8,6 +8,7 @@ import express from 'express';
 import Anthropic from '@anthropic-ai/sdk';
 import { ORCHESTRATOR_SYSTEM_PROMPT } from './system-prompt.js';
 import { ORCHESTRATOR_TOOLS, handleToolCall } from './tools.js';
+import { getActiveIntake, handleIntakeReply } from '../intake/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -41,6 +42,55 @@ export async function startChatServer(port: number = 3000): Promise<void> {
       }
       
       console.log(`\n💬 User: ${message}`);
+      
+      // MIDDLEWARE: Check for active vision session BEFORE going to orchestrator
+      // This prevents the orchestrator from calling start_vision on every message
+      const activeSession = await getActiveIntake();
+      if (activeSession.active && activeSession.sessionId) {
+        console.log(`   🔄 Active vision session detected: ${activeSession.sessionId}`);
+        console.log(`   ➡️  Bypassing orchestrator, calling continue_vision directly`);
+        
+        // Call handleIntakeReply directly (bypasses orchestrator)
+        const intakeResponse = await handleIntakeReply(activeSession.sessionId, message);
+        
+        // Format the response as a markdown message
+        let responseText = intakeResponse.message;
+        
+        if (intakeResponse.quickOptions && intakeResponse.quickOptions.length > 0) {
+          responseText += '\n\n**Quick options:**\n' + intakeResponse.quickOptions.map(opt => `• ${opt}`).join('\n');
+        }
+        
+        // Set up SSE (Server-Sent Events)
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        
+        // Stream the response
+        res.write(`data: ${JSON.stringify({ type: 'text', content: responseText })}\n\n`);
+        
+        // Send done event with simplified message structure
+        const doneMessage = {
+          type: 'done',
+          assistant_message: {
+            role: 'assistant',
+            content: [{ type: 'text', text: responseText }],
+          },
+        };
+        res.write(`data: ${JSON.stringify(doneMessage)}\n\n`);
+        res.end();
+        
+        console.log(`   ✅ Vision session response sent (type: ${intakeResponse.type})`);
+        console.log(`   📊 Session complete: ${intakeResponse.visionSessionComplete}`);
+        
+        if (intakeResponse.visionSessionComplete) {
+          console.log(`   🎉 Vision session completed! Ready for approval.`);
+        }
+        
+        return;
+      }
+      
+      // No active session - proceed with normal orchestrator flow
+      console.log(`   ➡️  No active vision session, routing to orchestrator`);
       
       // Build messages array from history + new message
       let messages: Anthropic.MessageParam[] = [
