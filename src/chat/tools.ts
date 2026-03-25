@@ -28,6 +28,7 @@ import { handleNewIntake, handleIntakeReply, getActiveIntake, getSessionWithMess
 import { buildVisionDocument } from '../vision/index.js';
 import { decomposeProject } from '../decompose/index.js';
 import { generateAndSaveContextPacks } from '../prompts/generateAllContextPacks.js';
+import { getPipelineRunByRp, recordHumanGrade } from '../telemetry/index.js';
 
 
 /**
@@ -233,6 +234,39 @@ export const ORCHESTRATOR_TOOLS: Anthropic.Tool[] = [
         },
       },
     },
+  },
+  {
+    name: 'grade_project',
+    description: 'Record a human grade for a completed project. Use this to capture Ben\'s assessment of whether the project delivered value.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        project_name: {
+          type: 'string',
+          description: 'Name of the completed project to grade',
+        },
+        score: {
+          type: 'number',
+          description: '1-5 overall score (1=bad, 5=excellent)',
+          minimum: 1,
+          maximum: 5,
+        },
+        built_right_thing: {
+          type: 'string',
+          enum: ['yes', 'almost', 'no'],
+          description: 'Did we build what Ben actually needed?',
+        },
+        main_miss: {
+          type: 'string',
+          description: 'What was the biggest gap or miss, if any',
+        },
+        notes: {
+          type: 'string',
+          description: 'Optional additional notes',
+        },
+      },
+      required: ['project_name', 'score', 'built_right_thing'],
+    },
   }];
 
 /**
@@ -274,6 +308,9 @@ export async function handleToolCall(toolName: string, toolInput: any): Promise<
       
       case 'approve_vision':
         return await handleApproveVision(toolInput);
+      
+      case 'grade_project':
+        return await handleGradeProject(toolInput);
       
       default:
         return { error: `Unknown tool: ${toolName}` };
@@ -1028,5 +1065,65 @@ async function handleApproveVision(input: any) {
     projectName: project.name,
     rpCount: proposals.length,
     message: `✅ Created project "${project.name}" with ${proposals.length} RP(s). The worker is now processing. I'll notify you when decisions need your input.`,
+  };
+}
+
+async function handleGradeProject(input: any) {
+  console.log(`⭐ Grading project: ${input.project_name}`);
+  
+  // Find project by name
+  const { data: projects, error: projectError } = await supabase
+    .from('projects')
+    .select('id, name')
+    .ilike('name', input.project_name)
+    .limit(1);
+  
+  if (projectError || !projects || projects.length === 0) {
+    return {
+      error: `Project not found: ${input.project_name}`,
+    };
+  }
+  
+  const project = projects[0];
+  
+  // Find the most recent completed RP for this project
+  const { data: rps, error: rpError } = await supabase
+    .from('rps')
+    .select('id')
+    .eq('project_id', project.id)
+    .eq('state', 'COMPLETE')
+    .order('updated_at', { ascending: false })
+    .limit(1);
+  
+  if (rpError || !rps || rps.length === 0) {
+    return {
+      error: `No completed RPs found for project: ${input.project_name}`,
+    };
+  }
+  
+  const rp = rps[0];
+  
+  // Find pipeline run for this RP
+  const pipelineRun = await getPipelineRunByRp(rp.id);
+  
+  if (!pipelineRun) {
+    return {
+      error: `No pipeline run found for this project. Telemetry may not be enabled yet.`,
+    };
+  }
+  
+  // Record human grade
+  await recordHumanGrade(pipelineRun.id, {
+    score: input.score,
+    builtRightThing: input.built_right_thing,
+    mainMiss: input.main_miss || 'none',
+    notes: input.notes,
+  });
+  
+  return {
+    status: 'graded',
+    projectName: project.name,
+    score: input.score,
+    message: `✅ Grade recorded: ${input.score}/5 (${input.built_right_thing})`,
   };
 }
