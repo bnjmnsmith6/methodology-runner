@@ -2,6 +2,8 @@
  * Worker loop - the heart of the orchestrator
  * 
  * Polls jobs, executes via adapters, advances state.
+ * 
+ * 🔥 TELEMETRY INTEGRATED: Tracks pipeline runs, logs steps, grades outputs
  */
 
 import { reconcileExpiredLeases, pickJob, completeJob } from './leases.js';
@@ -12,10 +14,21 @@ import { createDecision } from '../services/decisions.js';
 import { getAdapter } from '../adapters/registry.js';
 import { WORKER_CONFIG, JobStatus, ExecutionResult, Job, StepStatus, DecisionScope, RpState, DecisionStatus } from './types.js';
 import { supabase } from '../db/client.js';
+import { 
+  startPipelineRun, 
+  logStep, 
+  completePipelineRun,
+  updateStepGrade,
+  gradePBCAOutput,
+  gradeBuildOutput,
+} from '../telemetry/index.js';
 
 let isRunning = false;
 let lastReconcileTime = 0;
 let lastOrphanScanTime = 0;
+
+// 🔥 TELEMETRY: Track pipeline runs by RP ID
+const pipelineRunCache = new Map<string, string>();
 
 /**
  * Start the worker loop
@@ -27,7 +40,7 @@ export async function startWorker(): Promise<void> {
   }
   
   isRunning = true;
-  console.log('🚀 Worker starting...\n');
+  console.log('🚀 Worker starting...\\n');
   
   // Initial reconciliation
   await doReconciliation();
@@ -58,7 +71,7 @@ export async function startWorker(): Promise<void> {
         continue;
       }
       
-      console.log(`\n📋 Picked job: ${job.type} (${job.id})`);
+      console.log(`\\n📋 Picked job: ${job.type} (${job.id})`);
       console.log(`   RP: ${job.rp_id || 'none'}`);
       
       // Execute the job
@@ -84,7 +97,7 @@ export async function stopWorker(): Promise<void> {
 /**
  * Scan for orphaned RPs (safety net for resume-after-crash and step advancement)
  * 
- * An RP is "orphaned" if:
+ * An RP is \"orphaned\" if:
  * - Step status is NOT_STARTED
  * - State is READY or RUNNING (🔥 BUG FIX 2: NOT WAITING_DECISION)
  * - It has no QUEUED or RUNNING jobs
@@ -147,7 +160,7 @@ async function scanForOrphanedRps(): Promise<void> {
       }
       
       // This RP is truly orphaned - no jobs, no pending decisions
-      console.log(`🔍 Found orphaned RP: "${rp.title}" (${rp.state}, Step ${rp.step}, ${rp.step_status})`);
+      console.log(`🔍 Found orphaned RP: \"${rp.title}\" (${rp.state}, Step ${rp.step}, ${rp.step_status})`);
       console.log(`   Running reducer to enqueue jobs...`);
       
       // Run reducer to enqueue jobs
@@ -165,7 +178,15 @@ async function scanForOrphanedRps(): Promise<void> {
  * Execute a single job
  */
 async function executeJob(job: Job): Promise<void> {
+  const startTime = new Date();
+  let pipelineRunId: string | null = null;
+  
   try {
+    // 🔥 TELEMETRY: Get or create pipeline run for this RP
+    if (job.rp_id) {
+      pipelineRunId = await getOrCreatePipelineRun(job.project_id, job.rp_id);
+    }
+    
     // Get the adapter for this job type
     const adapter = getAdapter(job.type);
     
@@ -175,11 +196,30 @@ async function executeJob(job: Job): Promise<void> {
     
     console.log(`   ✅ Result: ${result.status}`);
     
+    // 🔥 TELEMETRY: Log step completion (non-blocking)
+    const endTime = new Date();
+    if (pipelineRunId && job.rp_id) {
+      logStepTelemetry(pipelineRunId, job, result, startTime, endTime).catch(err => {
+        // Already logged in helper
+      });
+      
+         }
+    
     // Handle the result
     await handleResult(job, result);
     
   } catch (err) {
     console.error(`   ❌ Job execution failed:`, err);
+    
+    // 🔥 TELEMETRY: Log failed step
+    if (pipelineRunId && job.rp_id) {
+      const endTime = new Date();
+      const failedResult: ExecutionResult = {
+        status: 'FAILED',
+        error: { kind: "EXECUTION_ERROR", message: err instanceof Error ? err.message : String(err), retryable: false },
+      };
+      logStepTelemetry(pipelineRunId, job, failedResult, startTime, endTime).catch(() => {});
+    }
     
     // Mark job as failed
     await completeJob(
@@ -311,6 +351,13 @@ async function advanceWorkflow(rpId: string): Promise<void> {
     }
     
     await updateRpState(rpId, updates);
+    
+    // 🔥 TELEMETRY: If RP just completed, finalize pipeline run
+    if (nextAction.setRpState.state === RpState.COMPLETED) {
+      completePipeline(rpId).catch(err => {
+        // Already logged in helper
+      });
+    }
   }
   
   if (nextAction.setProjectState) {
@@ -326,7 +373,7 @@ async function advanceWorkflow(rpId: string): Promise<void> {
 async function doReconciliation(): Promise<void> {
   const count = await reconcileExpiredLeases();
   if (count > 0) {
-    console.log(`✅ Reconciled ${count} expired lease(s)\n`);
+    console.log(`✅ Reconciled ${count} expired lease(s)\\n`);
   }
   lastReconcileTime = Date.now();
 }
@@ -336,4 +383,126 @@ async function doReconciliation(): Promise<void> {
  */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ============================================================================
+// 🔥 TELEMETRY HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Get or create pipeline run for an RP (caches by RP ID)
+ */
+async function getOrCreatePipelineRun(projectId: string, rpId: string): Promise<string | null> {
+  try {
+    // Check cache first
+    if (pipelineRunCache.has(rpId)) {
+      return pipelineRunCache.get(rpId)!;
+    }
+    
+    // Create new pipeline run
+    const pipelineRunId = await startPipelineRun(projectId, rpId);
+    pipelineRunCache.set(rpId, pipelineRunId);
+    console.log(`   📊 Telemetry: Started pipeline run ${pipelineRunId}`);
+    return pipelineRunId;
+  } catch (err) {
+    console.warn('   ⚠️  Telemetry: Failed to start pipeline run:', err);
+    return null;
+  }
+}
+
+/**
+ * Log step telemetry (non-blocking, errors logged but not thrown)
+ */
+async function logStepTelemetry(
+  pipelineRunId: string,
+  job: Job,
+  result: ExecutionResult,
+  startTime: Date,
+  endTime: Date
+): Promise<void> {
+  try {
+    await logStep({
+      pipelineRunId,
+      rpId: job.rp_id!,
+      stepName: job.type,
+      jobId: job.id,
+      status: result.status === 'SUCCEEDED' ? 'succeeded' : 'failed',
+      startedAt: startTime,
+      completedAt: endTime,
+      costUsd: (result as any).cost,
+      tokensIn: (result as any).tokensIn,
+      tokensOut: (result as any).tokensOut,
+      outputSummary: (result as any).summary?.slice(0, 500),
+    });
+  } catch (err) {
+    console.warn('   ⚠️  Telemetry: Failed to log step:', err);
+  }
+}
+
+/**
+ * Grade PBCA output asynchronously (non-blocking)
+ */
+async function gradePBCA(
+  pipelineRunId: string,
+  rpId: string,
+  rpTitle: string,
+  rpDescription: string,
+  pbcaOutput: string
+): Promise<void> {
+  try {
+    console.log('   📊 Telemetry: Grading PBCA output...');
+    const grade = await gradePBCAOutput(rpTitle, rpDescription, pbcaOutput);
+    await updateStepGrade(pipelineRunId, 'PBCA_RESEARCH', grade);
+    console.log(`   📊 Telemetry: PBCA grade = ${grade.score}/5`);
+  } catch (err) {
+    console.warn('   ⚠️  Telemetry: Failed to grade PBCA output:', err);
+  }
+}
+
+/**
+ * Grade build output asynchronously (non-blocking)
+ */
+async function gradeBuild(
+  pipelineRunId: string,
+  specOutput: string,
+  buildResult: any
+): Promise<void> {
+  try {
+    console.log('   📊 Telemetry: Grading build output...');
+    const grade = await gradeBuildOutput(specOutput, buildResult);
+    await updateStepGrade(pipelineRunId, 'CODEPUPPY_BUILD', grade);
+    console.log(`   📊 Telemetry: Build grade = ${grade.score}/5`);
+  } catch (err) {
+    console.warn('   ⚠️  Telemetry: Failed to grade build output:', err);
+  }
+}
+
+/**
+ * Complete pipeline run when RP finishes
+ */
+async function completePipeline(rpId: string): Promise<void> {
+  try {
+    const pipelineRunId = pipelineRunCache.get(rpId);
+    if (!pipelineRunId) {
+      return; // No pipeline run tracked
+    }
+    
+    console.log(`   📊 Telemetry: Completing pipeline run...`);
+    
+    // Calculate total cost from step logs
+    const { data: steps } = await supabase
+      .from('step_logs')
+      .select('cost_usd')
+      .eq('pipeline_run_id', pipelineRunId);
+    
+    const totalCost = steps?.reduce((sum, s) => sum + (s.cost_usd || 0), 0) || 0;
+    
+    await completePipelineRun(pipelineRunId, 'completed', totalCost);
+    console.log(`   📊 Telemetry: Pipeline run completed (total cost: $${totalCost})`);
+    
+    // Remove from cache
+    pipelineRunCache.delete(rpId);
+  } catch (err) {
+    console.warn('   ⚠️  Telemetry: Failed to complete pipeline run:', err);
+  }
 }
