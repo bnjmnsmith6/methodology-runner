@@ -58,7 +58,7 @@ export function shouldStopAsking(
   }
   
   // User giving low-info replies repeatedly
-  if (consecutiveLowInfoReplies >= 2) {
+  if (consecutiveLowInfoReplies >= 3) {
     return {
       shouldStop: true,
       reason: 'low_info_replies',

@@ -328,11 +328,77 @@ export async function handleToolCall(toolName: string, toolInput: any): Promise<
 
 async function handleGetProjectStatus(input: any) {
   if (input.project_id) {
+    // Single project with full RP details
     const status = await getProjectStatus(input.project_id);
-    return status;
+    
+    // Fetch recent jobs for each RP
+    const rpsWithJobs = await Promise.all(
+      status.rps.map(async (rp) => {
+        const { data: jobs } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('rp_id', rp.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+        
+        return {
+          ...rp,
+          recent_jobs: jobs || [],
+        };
+      })
+    );
+    
+    return {
+      project: status.project,
+      rps: rpsWithJobs,
+    };
   } else {
+    // All projects with full RP details inline
     const projects = await getAllProjects();
-    return { projects };
+    
+    const projectsWithRps = await Promise.all(
+      projects.map(async (project) => {
+        const { data: rps } = await supabase
+          .from('rps')
+          .select('*')
+          .eq('project_id', project.id)
+          .order('priority', { ascending: true });
+        
+        // Fetch recent jobs for each RP
+        const rpsWithJobs = await Promise.all(
+          (rps || []).map(async (rp) => {
+            const { data: jobs } = await supabase
+              .from('jobs')
+              .select('*')
+              .eq('rp_id', rp.id)
+              .order('created_at', { ascending: false })
+              .limit(3);
+            
+            return {
+              id: rp.id,
+              title: rp.title,
+              description: rp.description,
+              state: rp.state,
+              step: rp.step,
+              step_status: rp.step_status,
+              debug_cycle_count: rp.debug_cycle_count,
+              last_error: rp.last_error,
+              recent_jobs: jobs || [],
+            };
+          })
+        );
+        
+        return {
+          id: project.id,
+          name: project.name,
+          tier: project.tier,
+          state: project.state,
+          rps: rpsWithJobs,
+        };
+      })
+    );
+    
+    return { projects: projectsWithRps };
   }
 }
 

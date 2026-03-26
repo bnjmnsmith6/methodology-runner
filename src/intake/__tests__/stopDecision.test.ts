@@ -87,12 +87,12 @@ describe('Stop Decision', () => {
       expect(decision.assumptionMode).toBe(true);
     });
     
-    it('should stop after 2 consecutive low-info replies', () => {
+    it('should stop after 3 consecutive low-info replies', () => {
       const decision = shouldStopAsking(
         microVisionSession,
         baseCoverage,
         false,
-        2 // consecutiveLowInfoReplies
+        3 // consecutiveLowInfoReplies
       );
       
       expect(decision.shouldStop).toBe(true);
