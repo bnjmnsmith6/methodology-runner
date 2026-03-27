@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>AI Assistant Viewer</title>
+  <link rel="stylesheet" href="styles/mobile.css">
+  <link rel="stylesheet" href="styles/content-types.css">
+</head>
+<body>
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <span class="app-title">AI Assistant</span>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Content navigation" aria-hidden="true">
+    <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
+    <div class="menu-panel">
+      <div class="menu-header">
+        <span class="menu-title">Navigation</span>
+        <button class="menu-close" id="menuClose" aria-label="Close menu">&#x2715;</button>
+      </div>
+      <ul class="menu-list" role="list">
+        <li><button class="menu-item active" data-content-type="all" role="menuitem">All Content</button></li>
+        <li><button class="menu-item" data-content-type="text" role="menuitem">Text</button></li>
+        <li><button class="menu-item" data-content-type="code" role="menuitem">Code</button></li>
+        <li><button class="menu-item" data-content-type="json" role="menuitem">JSON</button></li>
+        <li><button class="menu-item" data-content-type="table" role="menuitem">Tables</button></li>
+        <li><button class="menu-item" data-content-type="list" role="menuitem">Lists</button></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="viewer" id="main" role="main">
+    <div class="content-tabs" role="tablist" aria-label="Content type filter">
+      <button class="tab active" role="tab" aria-selected="true" data-content-type="all">All</button>
+      <button class="tab" role="tab" aria-selected="false" data-content-type="text">Text</button>
+      <button class="tab" role="tab" aria-selected="false" data-content-type="code">Code</button>
+      <button class="tab" role="tab" aria-selected="false" data-content-type="json">JSON</button>
+      <button class="tab" role="tab" aria-selected="false" data-content-type="table">Tables</button>
+      <button class="tab" role="tab" aria-selected="false" data-content-type="list">Lists</button>
+    </div>
+
+    <div class="content-feed" id="contentFeed">
+
+      <!-- Text content block -->
+      <article class="content-block" data-type="text">
+        <header class="block-header">
+          <span class="block-label label-text">Text</span>
+          <span class="block-meta">AI Response</span>
+        </header>
+        <div class="block-body">
+          <p>Here is a sample AI-generated response demonstrating how text content renders on mobile. The layout adapts to various screen widths between 320px and 414px, ensuring comfortable reading without requiring horizontal scrolling or pinch-to-zoom.</p>
+          <p>Paragraphs maintain generous line height and comfortable font size so text is easy to read even on small phone screens.</p>
+        </div>
+      </article>
+
+      <!-- Code content block -->
+      <article class="content-block" data-type="code">
+        <header class="block-header">
+          <span class="block-label label-code">Code</span>
+          <span class="block-meta">Python · 12 lines</span>
+          <button class="copy-btn" aria-label="Copy code" data-copy-target="code-1">Copy</button>
+        </header>
+        <div class="block-body">
+          <div class="code-block" data-language="python">
+            <pre id="code-1"><code>def fibonacci(n):
+    """Generate Fibonacci sequence up to n terms."""
+    if n &lt;= 0:
+        return []
+    elif n == 1:
+        return [0]
+
+    sequence = [0, 1]
+    while len(sequence) &lt; n:
+        sequence.append(
+            sequence[-1] + sequence[-2]
+        )
+    return sequence
+
+print(fibonacci(10))</code></pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- JSON content block -->
+      <article class="content-block" data-type="json">
+        <header class="block-header">
+          <span class="block-label label-json">JSON</span>
+          <span class="block-meta">Structured Data</span>
+          <button class="expand-all-btn" aria-label="Expand all JSON nodes">Expand All</button>
+        </header>
+        <div class="block-body">
+          <div class="json-viewer" id="jsonViewer" role="tree" aria-label="JSON structure">
+            <div class="json-node collapsed" data-node-id="root">
+              <button class="json-toggle" aria-expanded="false" aria-label="Toggle object">
+                <span class="json-toggle-icon">&#9654;</span>
+                <span class="json-key">response</span>
+                <span class="json-brace">{</span>
+                <span class="json-preview">3 keys</span>
+                <span class="json-brace collapsed-brace">}</span>
+              </button>
+              <div class="json-children" aria-hidden="true">
+                <div class="json-leaf">
+                  <span class="json-key">"model"</span>
+                  <span class="json-colon">:</span>
+                  <span class="json-string">"claude-3-opus"</span>
+                </div>
+                <div class="json-leaf">
+                  <span class="json-key">"tokens"</span>
+                  <span class="json-colon">:</span>
+                  <span class="json-number">1024</span>
+                </div>
+                <div class="json-node collapsed" data-node-id="metadata">
+                  <button class="json-toggle" aria-expanded="false" aria-label="Toggle metadata object">
+                    <span class="json-toggle-icon">&#9654;</span>
+                    <span class="json-key">"metadata"</span>
+                    <span class="json-colon">:</span>
+                    <span class="json-brace">{</span>
+                    <span class="json-preview">2 keys</span>
+                    <span class="json-brace collapsed-brace">}</span>
+                  </button>
+                  <div class="json-children" aria-hidden="true">
+                    <div class="json-leaf">
+                      <span class="json-key">"latency_ms"</span>
+                      <span class="json-colon">:</span>
+                      <span class="json-number">312</span>
+                    </div>
+                    <div class="json-leaf">
+                      <span class="json-key">"finish_reason"</span>
+                      <span class="json-colon">:</span>
+                      <span class="json-string">"stop"</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Table content block -->
+      <article class="content-block" data-type="table">
+        <header class="block-header">
+          <span class="block-label label-table">Table</span>
+          <span class="block-meta">Comparison Data</span>
+        </header>
+        <div class="block-body">
+          <div class="table-wrapper" role="region" aria-label="Scrollable table">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Model</th>
+                  <th scope="col">Parameters</th>
+                  <th scope="col">Context</th>
+                  <th scope="col">Speed</th>
+                  <th scope="col">Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Claude 3 Haiku</td>
+                  <td>20B</td>
+                  <td>200K</td>
+                  <td>Fast</td>
+                  <td>Low</td>
+                </tr>
+                <tr>
+                  <td>Claude 3 Sonnet</td>
+                  <td>70B</td>
+                  <td>200K</td>
+                  <td>Medium</td>
+                  <td>Medium</td>
+                </tr>
+                <tr>
+                  <td>Claude 3 Opus</td>
+                  <td>200B+</td>
+                  <td>200K</td>
+                  <td>Slow</td>
+                  <td>High</td>
+                </tr>
+                <tr>
+                  <td>GPT-4o</td>
+                  <td>~200B</td>
+                  <td>128K</td>
+                  <td>Fast</td>
+                  <td>High</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+
+      <!-- List content block -->
+      <article class="content-block" data-type="list">
+        <header class="block-header">
+          <span class="block-label label-list">List</span>
+          <span class="block-meta">Key Points</span>
+        </header>
+        <div class="block-body">
+          <ul class="ai-list">
+            <li class="list-item">
+              <span class="list-marker" aria-hidden="true">&#10003;</span>
+              Mobile-first design ensures content is readable on all screen sizes from 320px to 414px width
+            </li>
+            <li class="list-item">
+              <span class="list-marker" aria-hidden="true">&#10003;</span>
+              Touch targets are at least 44px to meet accessibility requirements for finger tapping
+            </li>
+            <li class="list-item">
+              <span class="list-marker" aria-hidden="true">&#10003;</span>
+              Code blocks support horizontal scrolling with syntax highlighting preserved
+            </li>
+            <li class="list-item">
+              <span class="list-marker" aria-hidden="true">&#10003;</span>
+              JSON viewers allow collapsible tree navigation with smooth touch animations
+            </li>
+            <li class="list-item">
+              <span class="list-marker" aria-hidden="true">&#10003;</span>
+              Progressive enhancement ensures basic functionality without JavaScript
+            </li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <footer class="app-footer" role="contentinfo">
+    <p class="footer-text">AI Assistant Viewer &mdash; Mobile Interface</p>
+  </footer>
+
+  <script src="scripts/viewer.js" defer></script>
+</body>
+</html>
