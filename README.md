@@ -1,10 +1,14 @@
-# methodology-runner/rp-28ed3a10
+# Python Hello World Script
 
-**Project:** Unknown  
-**Tier:** Unknown  
+**Project:** Python Hello World Script  
+**Tier:** 1  
 **Built by:** GUPPI (autonomous AI development pipeline)  
-**Build cost:** $0.07213125000000001  
+**Build cost:** $0.07  
 **Build date:** 2026-03-26
+
+## What was requested
+
+Create a basic Python script for personal learning that demonstrates the classic "Hello World" program
 
 ## What was built
 
