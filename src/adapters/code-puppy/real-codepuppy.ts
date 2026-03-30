@@ -159,10 +159,10 @@ export class RealCodePuppyAdapter implements AgentAdapter {
           
           // Run deterministic hard gates
           const gateResult = runHardGates(worktreePath, result);
-          console.log(\`   \${gateResult.hard_gate_pass ? '\u2705' : '\u274c'} Hard gates: \${gateResult.summary}\`);
+          console.log("   " + (gateResult.hard_gate_pass ? "PASS" : "FAIL") + " Hard gates: " + gateResult.summary);
           for (const check of gateResult.checks) {
             if (!check.passed) {
-              console.log(\`      \u274c \${check.dimension}: \${check.notes}\`);
+              console.log("      FAIL " + check.dimension + ": " + check.notes);
             }
           }
 
