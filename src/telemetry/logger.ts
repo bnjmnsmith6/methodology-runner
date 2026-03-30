@@ -11,7 +11,8 @@ import { supabase } from '../db/client.js';
  */
 export async function startPipelineRun(
   projectId: string,
-  rpId: string
+  rpId: string,
+  traceId?: string
 ): Promise<string> {
   const { data, error } = await supabase
     .from('pipeline_runs')
@@ -20,6 +21,7 @@ export async function startPipelineRun(
       rp_id: rpId,
       status: 'running',
       started_at: new Date().toISOString(),
+      trace_id: traceId || null,
     })
     .select('id')
     .single();
@@ -55,6 +57,13 @@ export async function logStep(params: {
   outputSummary?: string;
   artifactPaths?: string[];
   metadata?: Record<string, any>;
+  traceId?: string;
+  spanId?: string;
+  expected?: Record<string, any>;
+  observed?: Record<string, any>;
+  delta?: Record<string, any>;
+  severity?: string;
+  fingerprint?: string;
 }): Promise<void> {
   const durationMs = params.completedAt.getTime() - params.startedAt.getTime();
 
@@ -80,6 +89,13 @@ export async function logStep(params: {
       output_summary: params.outputSummary || null,
       artifact_paths: params.artifactPaths || [],
       metadata: params.metadata || {},
+      trace_id: params.traceId || null,
+      span_id: params.spanId || null,
+      expected: params.expected || null,
+      observed: params.observed || null,
+      delta: params.delta || null,
+      severity: params.severity || 'info',
+      fingerprint: params.fingerprint || null,
     });
 
   if (error) {

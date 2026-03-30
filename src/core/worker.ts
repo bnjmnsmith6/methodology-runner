@@ -205,7 +205,7 @@ async function executeJob(job: Job): Promise<void> {
     // 🔥 TELEMETRY: Log step completion (non-blocking)
     const endTime = new Date();
     if (pipelineRunId && job.rp_id) {
-      logStepTelemetry(pipelineRunId, job, result, startTime, endTime).catch(err => {
+      logStepTelemetry(pipelineRunId, job, result, startTime, endTime, traceId).catch(err => {
         // Already logged in helper
       });
       
@@ -224,7 +224,7 @@ async function executeJob(job: Job): Promise<void> {
         status: 'FAILED',
         error: { kind: "EXECUTION_ERROR", message: err instanceof Error ? err.message : String(err), retryable: false },
       };
-      logStepTelemetry(pipelineRunId, job, failedResult, startTime, endTime).catch(() => {});
+      logStepTelemetry(pipelineRunId, job, failedResult, startTime, endTime, traceId).catch(() => {});
     }
     
     // Mark job as failed
@@ -406,7 +406,9 @@ async function getOrCreatePipelineRun(projectId: string, rpId: string): Promise<
     }
     
     // Create new pipeline run
-    const pipelineRunId = await startPipelineRun(projectId, rpId);
+    const traceId = generateTraceId();
+    const pipelineRunId = await startPipelineRun(projectId, rpId, traceId);
+    console.log(\`   🔗 Trace: \${traceId}\`);
     pipelineRunCache.set(rpId, pipelineRunId);
     console.log(`   📊 Telemetry: Started pipeline run ${pipelineRunId}`);
     return pipelineRunId;
@@ -456,7 +458,8 @@ async function logStepTelemetry(
   job: Job,
   result: ExecutionResult,
   startTime: Date,
-  endTime: Date
+  endTime: Date,
+  traceId?: string
 ): Promise<void> {
   try {
     await logStep({
@@ -471,6 +474,8 @@ async function logStepTelemetry(
       tokensIn: extractTokens(result, 'in'),
       tokensOut: extractTokens(result, 'out'),
       outputSummary: extractSummary(result),
+      traceId: traceId,
+      spanId: generateSpanId(job.type),
     });
   } catch (err) {
     console.warn('   ⚠️  Telemetry: Failed to log step:', err);
