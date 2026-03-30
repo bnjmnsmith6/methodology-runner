@@ -339,9 +339,19 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       console.log(`   📝 Generating README.md...`);
       
       // Extract vision context from constellation packet
-      const visionContext = typeof packet === 'string' 
-        ? packet.split('\n').slice(0, 10).join('\n') 
-        : 'See .methodology/constellation-packet.md for full context';
+      const visionContext = (() => {
+        if (typeof packet !== 'string') return 'See .methodology/constellation-packet.md for full context';
+        const lines = packet.split('\n');
+        const objIdx = lines.findIndex((l: string) => l.match(/^#+\s*\d*\.?\s*Objective/i));
+        if (objIdx >= 0) {
+          const endIdx = lines.findIndex((l: string, i: number) => i > objIdx && l.match(/^#+\s/));
+          const section = lines.slice(objIdx + 1, endIdx > 0 ? endIdx : objIdx + 15)
+            .filter((l: string) => !l.startsWith('@@'))
+            .join('\n').trim();
+          if (section) return section;
+        }
+        return lines.filter((l: string) => !l.startsWith('@@') && l.trim()).slice(0, 10).join('\n');
+      })();
       
       // Determine "how to run" instructions
       const changedFiles = buildResult.changedFiles || [];
