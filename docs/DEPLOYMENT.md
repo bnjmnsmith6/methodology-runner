@@ -118,6 +118,9 @@ CODE_PUPPY_CLI_PATH=/tmp/code-puppy
 CODE_PUPPY_HEARTBEAT_INTERVAL=30000
 CODE_PUPPY_WORKTREE_ROOT=/tmp/worktrees
 
+# === GITHUB (optional, not needed since no builds run here) ===
+# GITHUB_TOKEN=ghp_your_token_here
+
 # === OPTIONAL: REAL AGENTS ===
 USE_REAL_PBCA=false
 USE_REAL_CLAUDE=false
@@ -215,6 +218,9 @@ CODE_PUPPY_REPO_PATH=/home/methodology-runner/repos
 CODE_PUPPY_CLI_PATH=/home/methodology-runner/code-puppy
 CODE_PUPPY_HEARTBEAT_INTERVAL=30000
 CODE_PUPPY_WORKTREE_ROOT=/home/methodology-runner/worktrees
+
+# === GITHUB (for pushing built code) ===
+GITHUB_TOKEN=ghp_your_token_here
 
 # === REAL AGENTS ===
 USE_REAL_PBCA=true

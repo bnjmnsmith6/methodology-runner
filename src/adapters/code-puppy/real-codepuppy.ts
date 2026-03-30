@@ -11,6 +11,10 @@ import { startHeartbeat } from './heartbeat.js';
 import { assembleBuildPrompt } from './prompt-assembler.js';
 import { normalizeBuildResult } from './normalize-result.js';
 import { MockCodePuppyAdapter } from '../mock-codepuppy.js';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export class RealCodePuppyAdapter implements AgentAdapter {
   private executable: string | null = null;
@@ -141,7 +145,24 @@ export class RealCodePuppyAdapter implements AgentAdapter {
         console.log(`   📝 Summary: ${result.summary.slice(0, 100)}...`);
         console.log(`   📁 Changed files: ${result.changedFiles.length}`);
         
-        // 9. Map to ExecutionResult
+        // 9. If build succeeded, push to GitHub
+        let githubUrl: string | null = null;
+        let branchName: string | null = null;
+        
+        if (result.status === 'success') {
+          const pushResult = await this.pushToGitHub(
+            worktreePath,
+            `rp-${job.rp_id!.slice(0, 8)}`
+          );
+          
+          if (pushResult) {
+            githubUrl = pushResult.url;
+            branchName = pushResult.branchName;
+            console.log(`   🌐 Pushed to GitHub: ${githubUrl}`);
+          }
+        }
+        
+        // 10. Map to ExecutionResult
         switch (result.status) {
           case 'success':
             return {
@@ -158,7 +179,9 @@ export class RealCodePuppyAdapter implements AgentAdapter {
                   rawLogPath: result.rawLogPath,
                   costUsd: result.costUsd,
                   numTurns: result.numTurns,
-                  sessionId: result.sessionId
+                  sessionId: result.sessionId,
+                  githubUrl,
+                  branchName
                 }
               }]
             };
@@ -223,7 +246,7 @@ export class RealCodePuppyAdapter implements AgentAdapter {
             };
         }
       } finally {
-        // 10. Always stop heartbeat
+        // 11. Always stop heartbeat
         heartbeat.stop();
       }
     } catch (error: any) {
@@ -239,6 +262,66 @@ export class RealCodePuppyAdapter implements AgentAdapter {
     }
   }
   
+
+  /**
+   * Push worktree branch to GitHub
+   * 
+   * Non-blocking: Logs warnings but doesn't fail the build if push fails.
+   */
+  private async pushToGitHub(
+    worktreePath: string,
+    branchName: string
+  ): Promise<{ url: string; branchName: string } | null> {
+    const githubToken = process.env.GITHUB_TOKEN;
+    
+    // If no token, skip push
+    if (!githubToken) {
+      console.log(`   ⚠️  GITHUB_TOKEN not set — skipping push to GitHub`);
+      console.log(`      Set GITHUB_TOKEN to enable automatic push`);
+      return null;
+    }
+    
+    // GitHub repo info (hardcoded for methodology-runner)
+    const owner = 'bnjmnsmith6';
+    const repo = 'methodology-runner';
+    const githubUrl = `https://github.com/${owner}/${repo}/tree/${branchName}`;
+    
+    try {
+      console.log(`   🌐 Pushing branch ${branchName} to GitHub...`);
+      
+      // Set remote URL with token for authentication
+      const remoteUrlWithToken = `https://${owner}:${githubToken}@github.com/${owner}/${repo}.git`;
+      
+      await execAsync(
+        `git remote set-url origin "${remoteUrlWithToken}"`,
+        { cwd: worktreePath }
+      );
+      
+      // Push the branch
+      await execAsync(
+        `git push origin ${branchName} --force`,
+        { cwd: worktreePath }
+      );
+      
+      // Reset remote URL to non-authenticated version (remove token from git config)
+      const remoteUrlPublic = `https://github.com/${owner}/${repo}.git`;
+      await execAsync(
+        `git remote set-url origin "${remoteUrlPublic}"`,
+        { cwd: worktreePath }
+      ).catch(() => {
+        // Don't fail if we can't reset the URL
+      });
+      
+      console.log(`   ✅ Branch pushed successfully`);
+      return { url: githubUrl, branchName };
+      
+    } catch (error: any) {
+      console.warn(`   ⚠️  Failed to push to GitHub: ${error.message}`);
+      console.warn(`      Build succeeded, but code is only available locally`);
+      return null;
+    }
+  }
+
   /**
    * Run smoke test
    */
