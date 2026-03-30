@@ -8,6 +8,23 @@ import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
 const execAsync = promisify(exec);
+/**
+ * Slugify a string for use in branch names
+ * - Lowercase
+ * - Replace spaces with hyphens
+ * - Remove special characters (keep alphanumeric and hyphens)
+ * - Truncate to 50 chars
+ */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '')      // Remove special characters
+    .replace(/-+/g, '-')             // Replace multiple hyphens with single
+    .replace(/^-|-$/g, '')           // Remove leading/trailing hyphens
+    .slice(0, 50);                   // Truncate to 50 chars
+}
+
 
 /**
  * Ensure a git repository exists at the given path
@@ -40,8 +57,9 @@ export async function ensureRepo(repoRoot: string): Promise<void> {
 /**
  * Create or reuse a git worktree for an RP
  * 
- * Worktree path: <repoRoot>/.worktrees/rp-<rpId-short>
- * Branch name: methodology-runner/rp-<rpId-short>
+ * Branch name: guppi-builds/{slugified-title}
+ * If branch exists, append short ID: guppi-builds/{slugified-title}-{shortid}
+ * Worktree path: <repoRoot>/.worktrees/{branch-name-without-prefix}
  */
 export async function ensureWorktree(
   repoRoot: string,
@@ -49,8 +67,26 @@ export async function ensureWorktree(
   rpTitle: string
 ): Promise<string> {
   const rpIdShort = rpId.slice(0, 8);
-  const worktreeName = `rp-${rpIdShort}`;
-  const branchName = `methodology-runner/rp-${rpIdShort}`;
+  const slugifiedTitle = slugify(rpTitle);
+  
+  // Try base branch name first
+  let branchName = `guppi-builds/${slugifiedTitle}`;
+  let branchExists = false;
+  
+  // Check if branch already exists
+  try {
+    await execAsync(`git rev-parse --verify ${branchName}`, { cwd: repoRoot });
+    branchExists = true;
+    // Branch exists, append short ID to make it unique
+    branchName = `guppi-builds/${slugifiedTitle}-${rpIdShort}`;
+    console.log(`   📝 Branch ${slugifiedTitle} exists, using ${branchName}`);
+  } catch (error) {
+    // Branch doesn't exist, use base name
+    console.log(`   📝 Using branch name: ${branchName}`);
+  }
+  
+  // Worktree name is branch name without the prefix
+  const worktreeName = branchName.replace('guppi-builds/', '');
   const worktreePath = path.join(repoRoot, '.worktrees', worktreeName);
   
   // Check if worktree already exists
@@ -65,8 +101,8 @@ export async function ensureWorktree(
     mkdirSync(worktreesDir, { recursive: true });
   }
   
-  // Check if branch already exists
-  let branchExists = false;
+  // Check again if this specific branch exists (in case we changed it)
+  branchExists = false;
   try {
     await execAsync(`git rev-parse --verify ${branchName}`, { cwd: repoRoot });
     branchExists = true;
