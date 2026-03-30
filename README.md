@@ -1,10 +1,14 @@
-# methodology-runner/rp-7cee196e
+# Client Control and Sharing Interface
 
-**Project:** Unknown  
-**Tier:** Unknown  
+**Project:** Mirror Mind Therapist Weekly Progress Sharing  
+**Tier:** 3  
 **Built by:** GUPPI (autonomous AI development pipeline)  
-**Build cost:** $0.6734019000000001  
+**Build cost:** $0.67  
 **Build date:** 2026-03-27
+
+## What was requested
+
+Mirror Mind users need a secure, user-controlled way to share weekly progress summaries with their therapists
 
 ## What was built
 
