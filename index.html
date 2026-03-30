@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Current Date and Time</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      text-align: center;
+      background: #ffffff;
+      padding: 40px 60px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    h1 {
+      font-size: 1.2rem;
+      color: #555;
+      margin: 0 0 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    #datetime {
+      font-size: 2rem;
+      color: #222;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Current Date &amp; Time</h1>
+    <div id="datetime">Loading...</div>
+    <noscript>
+      <p>JavaScript is disabled. Please enable JavaScript to see the live date and time.</p>
+    </noscript>
+  </div>
+  <script>
+    function updateDateTime() {
+      var now = new Date();
+      var month = now.getMonth() + 1;
+      var day = now.getDate();
+      var year = now.getFullYear();
+      var hours = now.getHours();
+      var minutes = now.getMinutes();
+      var seconds = now.getSeconds();
+      var ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      var mm = String(month).padStart(2, '0');
+      var dd = String(day).padStart(2, '0');
+      var hh = String(hours).padStart(2, '0');
+      var min = String(minutes).padStart(2, '0');
+      var sec = String(seconds).padStart(2, '0');
+      document.getElementById('datetime').innerHTML =
+        mm + '/' + dd + '/' + year + ' ' + hh + ':' + min + ':' + sec + ' ' + ampm;
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+  </script>
+</body>
+</html>
