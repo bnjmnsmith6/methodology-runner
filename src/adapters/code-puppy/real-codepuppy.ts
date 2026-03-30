@@ -8,6 +8,7 @@ import { probeExecutable } from './probe.js';
 import { ensureRepo, ensureWorktree } from './worktree-manager.js';
 import { runHardGates } from '../../telemetry/hard-gates.js';
 import { writeGradeBundle } from '../../telemetry/grade-writer.js';
+import { writeGradeBundle } from '../../telemetry/grade-writer.js';
 import { runClaude } from './cli-runner.js';
 import { startHeartbeat } from './heartbeat.js';
 import { assembleBuildPrompt } from './prompt-assembler.js';
@@ -210,6 +211,11 @@ export class RealCodePuppyAdapter implements AgentAdapter {
                   sessionId: result.sessionId,
                   githubUrl,
                   branchName,
+                  gateResult: {
+                    hard_gate_pass: gateResult.hard_gate_pass,
+                    checks: gateResult.checks,
+                    summary: gateResult.summary
+                  },
                   gateResult: {
                     hard_gate_pass: gateResult.hard_gate_pass,
                     checks: gateResult.checks,
