@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Flip Simulator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+      color: #f0c040;
+    }
+
+    .coin-container {
+      perspective: 600px;
+    }
+
+    .coin {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: none;
+      user-select: none;
+    }
+
+    .coin.flipping {
+      animation: coinFlip 0.9s ease-in-out forwards;
+    }
+
+    .coin-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 700;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 6px solid #b8860b;
+    }
+
+    .coin-heads {
+      background: radial-gradient(circle at 35% 35%, #ffd700, #b8860b);
+      color: #3a2000;
+    }
+
+    .coin-tails {
+      background: radial-gradient(circle at 35% 35%, #c0c0c0, #707070);
+      color: #2a2a2a;
+      transform: rotateY(180deg);
+    }
+
+    @keyframes coinFlip {
+      0%   { transform: rotateY(0deg); }
+      100% { transform: rotateY(var(--flip-end, 900deg)); }
+    }
+
+    .result {
+      font-size: 1.8rem;
+      font-weight: 600;
+      min-height: 2.4rem;
+      text-align: center;
+      transition: opacity 0.3s;
+    }
+
+    .result.heads { color: #ffd700; }
+    .result.tails { color: #c0c0c0; }
+    .result.waiting { color: #666; font-style: italic; font-size: 1.2rem; }
+
+    .tally {
+      display: flex;
+      gap: 40px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px 40px;
+    }
+
+    .tally-item {
+      text-align: center;
+    }
+
+    .tally-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+
+    .tally-count {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .tally-item.heads .tally-count { color: #ffd700; }
+    .tally-item.tails .tally-count { color: #c0c0c0; }
+    .tally-item.total .tally-count { color: #eee; }
+
+    .hint {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .reset-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #aaa;
+      padding: 8px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .reset-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Coin Flip</h1>
+
+  <div class="coin-container">
+    <div class="coin" id="coin" onclick="flipCoin()">
+      <div class="coin-face coin-heads">H</div>
+      <div class="coin-face coin-tails">T</div>
+    </div>
+  </div>
+
+  <div class="result waiting" id="result">Click the coin to flip!</div>
+
+  <div class="tally">
+    <div class="tally-item heads">
+      <div class="tally-label">Heads</div>
+      <div class="tally-count" id="heads-count">0</div>
+    </div>
+    <div class="tally-item total">
+      <div class="tally-label">Total</div>
+      <div class="tally-count" id="total-count">0</div>
+    </div>
+    <div class="tally-item tails">
+      <div class="tally-label">Tails</div>
+      <div class="tally-count" id="tails-count">0</div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetCounters()">Reset</button>
+  <div class="hint">Click the coin to flip</div>
+
+  <script>
+    const state = {
+      headsCount: 0,
+      tailsCount: 0,
+      isAnimating: false,
+      currentResult: null
+    };
+
+    function generateResult() {
+      return Math.random() < 0.5 ? 'heads' : 'tails';
+    }
+
+    function animateCoin(result) {
+      const coin = document.getElementById('coin');
+      // Ensure final position shows correct face:
+      // heads = even multiples of 360 (0, 720, ...), tails = odd multiples (180, 540, ...)
+      const spins = 2; // extra full rotations for visual effect
+      const base = spins * 360;
+      const faceAngle = result === 'heads' ? 0 : 180;
+      const endAngle = base + faceAngle;
+      coin.style.setProperty('--flip-end', endAngle + 'deg');
+
+      coin.classList.remove('flipping');
+      // Force reflow to restart animation
+      void coin.offsetWidth;
+      coin.classList.add('flipping');
+    }
+
+    function updateDisplay(result) {
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = result === 'heads' ? 'Heads!' : 'Tails!';
+      resultEl.className = 'result ' + result;
+
+      document.getElementById('heads-count').textContent = state.headsCount;
+      document.getElementById('tails-count').textContent = state.tailsCount;
+      document.getElementById('total-count').textContent = state.headsCount + state.tailsCount;
+    }
+
+    function flipCoin() {
+      if (state.isAnimating) return;
+
+      state.isAnimating = true;
+      const result = generateResult();
+      state.currentResult = result;
+
+      if (result === 'heads') {
+        state.headsCount++;
+      } else {
+        state.tailsCount++;
+      }
+
+      animateCoin(result);
+
+      const coin = document.getElementById('coin');
+      const animationDuration = 900; // matches CSS animation duration in ms
+
+      coin.addEventListener('animationend', function onEnd() {
+        coin.removeEventListener('animationend', onEnd);
+        updateDisplay(result);
+        state.isAnimating = false;
+      });
+    }
+
+    function resetCounters() {
+      state.headsCount = 0;
+      state.tailsCount = 0;
+      state.currentResult = null;
+
+      document.getElementById('heads-count').textContent = '0';
+      document.getElementById('tails-count').textContent = '0';
+      document.getElementById('total-count').textContent = '0';
+
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = 'Click the coin to flip!';
+      resultEl.className = 'result waiting';
+
+      const coin = document.getElementById('coin');
+      coin.classList.remove('flipping');
+      coin.style.setProperty('--flip-end', '0deg');
+    }
+  </script>
+</body>
+</html>
