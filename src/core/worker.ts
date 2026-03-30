@@ -7,6 +7,7 @@
  */
 
 import { generateTraceId, generateSpanId } from '../telemetry/trace.js';
+import { writeGradeBundle } from '../telemetry/grade-writer.js';
 import { reconcileExpiredLeases, pickJob, completeJob } from './leases.js';
 import { next as reducerNext } from './reducer.js';
 import { enqueueJobs } from './scheduler.js';
@@ -211,6 +212,14 @@ async function executeJob(job: Job): Promise<void> {
       logStepTelemetry(pipelineRunId, job, result, startTime, endTime, traceId).catch(err => {
         // Already logged in helper
       });
+
+      // Write grade bundle if build step returned gate results
+      const gateResult = result.artifacts?.[0]?.metadata?.gateResult;
+      if (gateResult && pipelineRunId) {
+        writeGradeBundle(pipelineRunId, gateResult, 'pre-ship').catch(err => {
+          console.warn('   Grade bundle write failed: ' + err);
+        });
+      }
       
          }
     
