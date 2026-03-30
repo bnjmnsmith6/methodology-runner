@@ -1,5 +1,4 @@
 /**
-import { generateTraceId, generateSpanId } from '../telemetry/trace.js';
  * Worker loop - the heart of the orchestrator
  * 
  * Polls jobs, executes via adapters, advances state.
@@ -7,6 +6,7 @@ import { generateTraceId, generateSpanId } from '../telemetry/trace.js';
  * 🔥 TELEMETRY INTEGRATED: Tracks pipeline runs, logs steps, grades outputs
  */
 
+import { generateTraceId, generateSpanId } from '../telemetry/trace.js';
 import { reconcileExpiredLeases, pickJob, completeJob } from './leases.js';
 import { next as reducerNext } from './reducer.js';
 import { enqueueJobs } from './scheduler.js';
