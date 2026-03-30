@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stopwatch</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    .stopwatch {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 40px 60px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+
+    #display {
+      font-size: 64px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: #222222;
+      margin-bottom: 32px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    button {
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    #startStopBtn {
+      background-color: #28a745;
+      color: #ffffff;
+      min-width: 100px;
+    }
+
+    #startStopBtn:hover {
+      background-color: #218838;
+    }
+
+    #startStopBtn.running {
+      background-color: #dc3545;
+    }
+
+    #startStopBtn.running:hover {
+      background-color: #c82333;
+    }
+
+    #resetBtn {
+      background-color: #6c757d;
+      color: #ffffff;
+      min-width: 100px;
+    }
+
+    #resetBtn:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="stopwatch">
+    <div id="display">00:00</div>
+    <div class="controls">
+      <button id="startStopBtn">Start</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    var state = 'stopped'; // 'stopped', 'running', 'paused'
+    var startTime = null;
+    var elapsed = 0; // milliseconds accumulated before current run
+    var intervalId = null;
+
+    var display = document.getElementById('display');
+    var startStopBtn = document.getElementById('startStopBtn');
+    var resetBtn = document.getElementById('resetBtn');
+
+    function formatTime(ms) {
+      var totalSeconds = Math.floor(ms / 1000);
+      var minutes = Math.floor(totalSeconds / 60);
+      var seconds = totalSeconds % 60;
+      return pad(minutes) + ':' + pad(seconds);
+    }
+
+    function pad(n) {
+      return n < 10 ? '0' + n : String(n);
+    }
+
+    function updateDisplay() {
+      var now = Date.now();
+      var total = elapsed + (now - startTime);
+      display.textContent = formatTime(total);
+    }
+
+    function start() {
+      startTime = Date.now();
+      state = 'running';
+      intervalId = setInterval(updateDisplay, 250);
+      startStopBtn.textContent = 'Stop';
+      startStopBtn.classList.add('running');
+    }
+
+    function stop() {
+      elapsed += Date.now() - startTime;
+      startTime = null;
+      state = 'paused';
+      clearInterval(intervalId);
+      intervalId = null;
+      startStopBtn.textContent = 'Start';
+      startStopBtn.classList.remove('running');
+    }
+
+    function reset() {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      state = 'stopped';
+      startTime = null;
+      elapsed = 0;
+      display.textContent = '00:00';
+      startStopBtn.textContent = 'Start';
+      startStopBtn.classList.remove('running');
+    }
+
+    startStopBtn.addEventListener('click', function () {
+      if (state === 'running') {
+        stop();
+      } else {
+        start();
+      }
+    });
+
+    resetBtn.addEventListener('click', reset);
+  </script>
+</body>
+</html>
