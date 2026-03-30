@@ -284,10 +284,17 @@ export class RealCodePuppyAdapter implements AgentAdapter {
     // GitHub repo info (hardcoded for methodology-runner)
     const owner = 'bnjmnsmith6';
     const repo = 'methodology-runner';
-    const githubUrl = `https://github.com/${owner}/${repo}/tree/${branchName}`;
+    // GitHub URL will be constructed after we get the actual branch name
     
     try {
-      console.log(`   🌐 Pushing branch ${branchName} to GitHub...`);
+      // Get the actual current branch name (don't trust passed parameter)
+      const { stdout: branchOutput } = await execAsync(
+        'git branch --show-current',
+        { cwd: worktreePath }
+      );
+      const actualBranch = branchOutput.trim();
+      
+      console.log(`   🌐 Pushing branch ${actualBranch} to GitHub...`);
       
       // Setup remote URL with token for authentication
       const remoteUrlWithToken = `https://${owner}:${githubToken}@github.com/${owner}/${repo}.git`;
@@ -318,7 +325,7 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       
       // Push the branch
       await execAsync(
-        `git push origin ${branchName} --force`,
+        `git push origin ${actualBranch} --force`,
         { cwd: worktreePath }
       );
       
@@ -331,7 +338,10 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       });
       
       console.log(`   ✅ Branch pushed successfully`);
-      return { url: githubUrl, branchName };
+      
+      // Construct GitHub URL with actual branch name
+      const githubUrl = `https://github.com/${owner}/${repo}/tree/${actualBranch}`;
+      return { url: githubUrl, branchName: actualBranch };
       
     } catch (error: any) {
       console.warn(`   ⚠️  Failed to push to GitHub: ${error.message}`);
