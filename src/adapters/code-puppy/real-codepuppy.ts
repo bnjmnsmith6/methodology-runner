@@ -289,7 +289,7 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       console.log('   📦 Committing build artifacts...');
       
       // Ensure .gitignore exists to prevent committing node_modules etc
-      const gitignorePath = require('path').join(worktreePath, '.gitignore');
+      const gitignorePath = worktreePath + '/.gitignore';
       if (!require('fs').existsSync(gitignorePath)) {
         await fs.promises.writeFile(gitignorePath, [
           'node_modules/',
