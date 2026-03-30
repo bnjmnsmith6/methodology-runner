@@ -1,0 +1,59 @@
+# Vision Pipeline System Configuration
+
+camera:
+  rtsp_url: "rtsp://admin:password@192.168.1.100/h264Preview_01_main"
+  width: 3840
+  height: 2160
+  fps: 30
+  reconnect_delay_s: 5
+  max_reconnect_attempts: 10
+  failed_frame_threshold: 0.05  # 5% failed frames triggers reconnect
+  buffer_size: 2
+
+inference:
+  model_path: "config/models/detection_model.trt"
+  input_width: 640
+  input_height: 640
+  confidence_threshold: 0.5
+  nms_threshold: 0.4
+  max_detections: 100
+  device: "cuda:0"
+  precision: "fp16"  # fp32, fp16, int8
+  max_latency_ms: 100.0
+
+classes:
+  - "person"
+  - "vehicle"
+  - "bicycle"
+  - "motorcycle"
+  - "car"
+  - "truck"
+  - "bus"
+  - "object"
+
+thermal:
+  warning_temp_c: 65.0
+  throttle_temp_c: 70.0
+  critical_temp_c: 80.0
+  poll_interval_s: 5.0
+  thermal_zone_path: "/sys/class/thermal/thermal_zone0/temp"
+
+power:
+  max_watts: 15.0
+  warning_watts: 13.0
+  power_mode_normal: 0    # MAXN mode
+  power_mode_throttled: 1 # 10W mode
+  ina3221_path: "/sys/bus/i2c/drivers/ina3221x"
+
+monitoring:
+  log_level: "INFO"
+  metrics_interval_s: 10.0
+  health_check_interval_s: 30.0
+  max_consecutive_errors: 5
+  recovery_wait_s: 10.0
+
+pipeline:
+  frame_queue_size: 5
+  result_queue_size: 10
+  preprocessing_threads: 2
+  enable_tracking: false  # basic tracking for tracking_id

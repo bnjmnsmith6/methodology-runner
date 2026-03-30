@@ -1,0 +1,2 @@
+# detection_model.trt is generated at setup time via:
+#   python -m src.tensorrt_engine --optimize path/to/model.onnx

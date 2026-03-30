@@ -1,0 +1,14 @@
+# Core dependencies
+numpy>=1.21.0
+pyyaml>=6.0
+
+# Computer vision (Jetson-provided via JetPack; opencv-python for development)
+# opencv-python>=4.7.0  # install via JetPack on Jetson
+
+# TensorRT and CUDA (provided by JetPack on Jetson)
+# tensorrt>=8.5.0        # installed with JetPack
+# pycuda>=2022.1         # installed with JetPack
+
+# Testing
+pytest>=7.0.0
+pytest-timeout>=2.1.0
