@@ -1,10 +1,14 @@
-# methodology-runner/rp-39563e0b
+# Supabase Data Layer & API Integration
 
-**Project:** Unknown  
-**Tier:** Unknown  
+**Project:** GUPPI Pipeline Tracker  
+**Tier:** 3  
 **Built by:** GUPPI (autonomous AI development pipeline)  
-**Build cost:** $0.26870295  
+**Build cost:** $0.27  
 **Build date:** 2026-03-26
+
+## What was requested
+
+GUPPI pipeline tracker needs a data layer to store and retrieve project pipeline status across stages (Research → Review → Spec → Build → Test → Ship)
 
 ## What was built
 
