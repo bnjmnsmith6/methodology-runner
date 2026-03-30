@@ -6,6 +6,7 @@ import { AgentAdapter } from '../interface.js';
 import { Job, ExecutionResult, JobType } from '../../core/types.js';
 import { probeExecutable } from './probe.js';
 import { ensureRepo, ensureWorktree } from './worktree-manager.js';
+import { runHardGates } from '../../telemetry/hard-gates.js';
 import { runClaude } from './cli-runner.js';
 import { startHeartbeat } from './heartbeat.js';
 import { assembleBuildPrompt } from './prompt-assembler.js';
