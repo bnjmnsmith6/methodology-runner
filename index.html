@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice Roller</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #1a1a2e;
+      font-family: Arial, sans-serif;
+      color: #eee;
+      user-select: none;
+    }
+
+    h1 {
+      margin-bottom: 32px;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      color: #e0e0ff;
+    }
+
+    .dice-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      cursor: pointer;
+      perspective: 400px;
+    }
+
+    .dice {
+      width: 120px;
+      height: 120px;
+      background: #ffffff;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      font-weight: bold;
+      color: #1a1a2e;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+      transition: box-shadow 0.1s;
+      transform-origin: center center;
+    }
+
+    .dice-container:hover .dice {
+      box-shadow: 0 12px 32px rgba(100,100,255,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+    }
+
+    .dice-container:active .dice {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
+    }
+
+    @keyframes roll {
+      0%   { transform: rotate(0deg) scale(1); }
+      10%  { transform: rotate(-15deg) scale(0.9); }
+      25%  { transform: rotate(20deg) scale(1.1); }
+      40%  { transform: rotate(-25deg) scale(0.85); }
+      55%  { transform: rotate(30deg) scale(1.05); }
+      70%  { transform: rotate(-10deg) scale(0.95); }
+      85%  { transform: rotate(5deg) scale(1.02); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .dice.rolling {
+      animation: roll 0.6s ease-in-out forwards;
+    }
+
+    .result {
+      margin-top: 28px;
+      font-size: 1.1rem;
+      color: #a0a0cc;
+      min-height: 1.6em;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .result.show {
+      color: #c0c0ff;
+      font-weight: bold;
+    }
+
+    .hint {
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: #555577;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dice Roller</h1>
+  <div class="dice-container" id="diceContainer" title="Click to roll">
+    <div class="dice" id="dice">&#9856;</div>
+  </div>
+  <div class="result" id="result"></div>
+  <div class="hint">Click the dice to roll</div>
+
+  <script>
+    const faces = ['\u2680', '\u2681', '\u2682', '\u2683', '\u2684', '\u2685'];
+    const diceEl = document.getElementById('dice');
+    const resultEl = document.getElementById('result');
+    const container = document.getElementById('diceContainer');
+
+    let rolling = false;
+
+    container.addEventListener('click', function () {
+      if (rolling) return;
+      rolling = true;
+
+      resultEl.textContent = '';
+      resultEl.className = 'result';
+
+      // Show shuffling faces during animation
+      const roll = Math.floor(Math.random() * 6); // 0–5 index
+      const shuffleInterval = setInterval(function () {
+        diceEl.textContent = faces[Math.floor(Math.random() * 6)];
+      }, 80);
+
+      diceEl.classList.add('rolling');
+
+      diceEl.addEventListener('animationend', function onEnd() {
+        diceEl.removeEventListener('animationend', onEnd);
+        clearInterval(shuffleInterval);
+        diceEl.classList.remove('rolling');
+        diceEl.textContent = faces[roll];
+
+        const value = roll + 1;
+        resultEl.textContent = 'You rolled a ' + value + '!';
+        resultEl.className = 'result show';
+        rolling = false;
+      });
+    });
+  </script>
+</body>
+</html>
