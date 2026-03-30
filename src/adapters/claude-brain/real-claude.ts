@@ -14,7 +14,7 @@ import { buildReviewContext } from './context/review-context.js';
 import { countJobsByType } from './context/job-context.js';
 import { buildSpecContext } from './context/spec-context.js';
 import { buildDebugContext } from './context/debug-context.js';
-import { REVIEW_SYSTEM_PROMPT, buildReviewUserMessage } from './prompts/review.js';
+import { buildReviewSystemPrompt, buildReviewUserMessage } from './prompts/review.js';
 import { SPEC_SYSTEM_PROMPT, buildSpecUserMessage } from './prompts/spec.js';
 import { DEBUG_SYSTEM_PROMPT, buildDebugUserMessage } from './prompts/debug.js';
 
@@ -52,8 +52,12 @@ export class RealClaudeAdapter implements AgentAdapter {
       // Build user message
       const userMessage = buildReviewUserMessage(contextPack);
       
-      console.log(`   ⚙️  Calling Anthropic API for review...`);
-      const response = await callAnthropic(REVIEW_SYSTEM_PROMPT, userMessage);
+      // Build tier-aware system prompt
+      const projectTier = contextPack.projectCard.projectTier;
+      const systemPrompt = buildReviewSystemPrompt(projectTier);
+      
+      console.log(`   ⚙️  Calling Anthropic API for review (Tier ${projectTier})...`);
+      const response = await callAnthropic(systemPrompt, userMessage);
       
       // Parse header
       const header = parseHeader(response.text);
