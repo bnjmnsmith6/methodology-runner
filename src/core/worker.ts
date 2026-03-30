@@ -34,6 +34,12 @@ const pipelineRunCache = new Map<string, string>();
  * Start the worker loop
  */
 export async function startWorker(): Promise<void> {
+  // 🔥 CHECK: WORKER_ENABLED environment variable
+  if (process.env.WORKER_ENABLED === 'false') {
+    console.log('⚠️  Worker disabled via WORKER_ENABLED=false — running chat server only');
+    return;
+  }
+  
   if (isRunning) {
     console.log('⚠️  Worker is already running');
     return;
