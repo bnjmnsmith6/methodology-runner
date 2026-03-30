@@ -1,10 +1,14 @@
-# methodology-runner/rp-b2bc90d8
+# New Year's 2027 Countdown Timer
 
-**Project:** Unknown  
-**Tier:** Unknown  
+**Project:** New Year's 2027 Countdown  
+**Tier:** 1  
 **Built by:** GUPPI (autonomous AI development pipeline)  
-**Build cost:** $0.11341005000000001  
+**Build cost:** $0.11  
 **Build date:** 2026-03-30
+
+## What was requested
+
+Need a countdown timer to New Year's 2027 that is self-contained and visually prominent
 
 ## What was built
 
