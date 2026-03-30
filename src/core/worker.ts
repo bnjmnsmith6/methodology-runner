@@ -408,7 +408,7 @@ async function getOrCreatePipelineRun(projectId: string, rpId: string): Promise<
     // Create new pipeline run
     const traceId = generateTraceId();
     const pipelineRunId = await startPipelineRun(projectId, rpId, traceId);
-    console.log(`   🔗 Trace: ${traceId}`);
+    console.log("   Trace: " + traceId);
     pipelineRunCache.set(rpId, pipelineRunId);
     console.log(`   📊 Telemetry: Started pipeline run ${pipelineRunId}`);
     return pipelineRunId;
