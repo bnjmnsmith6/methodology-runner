@@ -1,4 +1,5 @@
 /**
+import { generateTraceId, generateSpanId } from '../telemetry/trace.js';
  * Worker loop - the heart of the orchestrator
  * 
  * Polls jobs, executes via adapters, advances state.
