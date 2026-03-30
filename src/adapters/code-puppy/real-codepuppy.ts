@@ -151,6 +151,12 @@ export class RealCodePuppyAdapter implements AgentAdapter {
         let branchName: string | null = null;
         
         if (result.status === 'success') {
+          // Commit any uncommitted build artifacts first
+          await this.commitBuildArtifacts(
+            worktreePath,
+            job.input.rp_title || 'Build'
+          );
+          
           // Generate and commit README
           await this.generateAndCommitReadme(
             worktreePath,
@@ -273,6 +279,50 @@ export class RealCodePuppyAdapter implements AgentAdapter {
     }
   }
   
+
+
+  /**
+   * Commit build artifacts before README generation
+   */
+  private async commitBuildArtifacts(worktreePath: string, rpTitle: string): Promise<void> {
+    try {
+      console.log('   📦 Committing build artifacts...');
+      
+      // Ensure .gitignore exists to prevent committing node_modules etc
+      const gitignorePath = require('path').join(worktreePath, '.gitignore');
+      if (!require('fs').existsSync(gitignorePath)) {
+        await fs.promises.writeFile(gitignorePath, [
+          'node_modules/',
+          '.env',
+          'dist/',
+          'coverage/',
+          '*.log',
+          '.DS_Store',
+          'package-lock.json',
+        ].join('\n') + '\n', 'utf8');
+        console.log('   📝 Created .gitignore');
+      }
+
+      // Stage all files
+      await execAsync('git add -A', { cwd: worktreePath });
+
+      // Check if there are changes to commit
+      try {
+        await execAsync('git diff --cached --quiet', { cwd: worktreePath });
+        console.log('   ℹ️  No uncommitted build artifacts (Claude Code already committed)');
+      } catch {
+        // Exit code 1 = changes exist, commit them
+        const safeTitle = rpTitle.replace(/"/g, '\\"');
+        await execAsync(
+          `git commit -m "Build: ${safeTitle} [GUPPI autonomous build]"`,
+          { cwd: worktreePath }
+        );
+        console.log('   ✅ Build artifacts committed');
+      }
+    } catch (error: any) {
+      console.warn(`   ⚠️  Failed to commit build artifacts: ${error.message}`);
+    }
+  }
 
   /**
    * Generate README.md and commit it to worktree
