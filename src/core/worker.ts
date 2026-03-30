@@ -417,6 +417,38 @@ async function getOrCreatePipelineRun(projectId: string, rpId: string): Promise<
 }
 
 /**
+ * Extract cost from adapter result (each adapter stores it differently)
+ */
+function extractCost(result: ExecutionResult): number | undefined {
+  const meta = result.artifacts?.[0]?.metadata;
+  if (!meta) return undefined;
+  return meta.costUsd ?? meta.costEstimateUsd ?? meta.cost_estimate_usd ?? meta.cost ?? undefined;
+}
+
+/**
+ * Extract token counts from adapter result
+ */
+function extractTokens(result: ExecutionResult, direction: 'in' | 'out'): number | undefined {
+  const meta = result.artifacts?.[0]?.metadata;
+  if (!meta) return undefined;
+  
+  if (direction === 'in') {
+    return meta.tokensIn ?? meta.token_usage?.prompt_tokens ?? meta.token_usage?.input_tokens ?? undefined;
+  } else {
+    return meta.tokensOut ?? meta.token_usage?.completion_tokens ?? meta.token_usage?.output_tokens ?? undefined;
+  }
+}
+
+/**
+ * Extract summary from adapter result
+ */
+function extractSummary(result: ExecutionResult): string | undefined {
+  const content = result.artifacts?.[0]?.content;
+  if (typeof content === 'string') return content.slice(0, 500);
+  return undefined;
+}
+
+/**
  * Log step telemetry (non-blocking, errors logged but not thrown)
  */
 async function logStepTelemetry(
@@ -435,10 +467,10 @@ async function logStepTelemetry(
       status: result.status === 'SUCCEEDED' ? 'succeeded' : 'failed',
       startedAt: startTime,
       completedAt: endTime,
-      costUsd: (result as any).cost,
-      tokensIn: (result as any).tokensIn,
-      tokensOut: (result as any).tokensOut,
-      outputSummary: (result as any).summary?.slice(0, 500),
+      costUsd: extractCost(result),
+      tokensIn: extractTokens(result, 'in'),
+      tokensOut: extractTokens(result, 'out'),
+      outputSummary: extractSummary(result),
     });
   } catch (err) {
     console.warn('   ⚠️  Telemetry: Failed to log step:', err);
