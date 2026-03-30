@@ -30,6 +30,7 @@ let lastOrphanScanTime = 0;
 
 // 🔥 TELEMETRY: Track pipeline runs by RP ID
 const pipelineRunCache = new Map<string, string>();
+const traceIdCache = new Map<string, string>();
 
 /**
  * Start the worker loop
@@ -205,6 +206,7 @@ async function executeJob(job: Job): Promise<void> {
     
     // 🔥 TELEMETRY: Log step completion (non-blocking)
     const endTime = new Date();
+    const traceId = job.rp_id ? traceIdCache.get(job.rp_id) : undefined;
     if (pipelineRunId && job.rp_id) {
       logStepTelemetry(pipelineRunId, job, result, startTime, endTime, traceId).catch(err => {
         // Already logged in helper
@@ -411,6 +413,7 @@ async function getOrCreatePipelineRun(projectId: string, rpId: string): Promise<
     const pipelineRunId = await startPipelineRun(projectId, rpId, traceId);
     console.log("   Trace: " + traceId);
     pipelineRunCache.set(rpId, pipelineRunId);
+    traceIdCache.set(rpId, traceId);
     console.log(`   📊 Telemetry: Started pipeline run ${pipelineRunId}`);
     return pipelineRunId;
   } catch (err) {
