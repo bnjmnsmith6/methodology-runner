@@ -157,6 +157,15 @@ export class RealCodePuppyAdapter implements AgentAdapter {
             job.input.rp_title || 'Build'
           );
           
+          // Run deterministic hard gates
+          const gateResult = runHardGates(worktreePath, result);
+          console.log(\`   \${gateResult.hard_gate_pass ? '\u2705' : '\u274c'} Hard gates: \${gateResult.summary}\`);
+          for (const check of gateResult.checks) {
+            if (!check.passed) {
+              console.log(\`      \u274c \${check.dimension}: \${check.notes}\`);
+            }
+          }
+
           // Generate and commit README
           await this.generateAndCommitReadme(
             worktreePath,
