@@ -74,6 +74,58 @@ export GITHUB_TOKEN=ghp_your_token_here
 
 ---
 
+
+---
+
+## 🔧 Worktree Remote Handling (Fixed)
+
+### **Problem**
+
+Git worktrees **don't automatically inherit remotes** from the parent repository.
+
+**Error:**
+```
+fatal: No such remote 'origin'
+```
+
+**Why:**
+- Parent repo: has remote 'origin' configured
+- Worktree: isolated git directory, no remotes by default
+- `git remote set-url origin ...` fails if 'origin' doesn't exist
+
+### **Solution**
+
+Check if remote exists before set-url:
+
+```typescript
+// Check if origin remote exists
+let remoteExists = false;
+try {
+  await execAsync('git remote get-url origin', { cwd: worktreePath });
+  remoteExists = true;
+  console.log(`   📡 Remote 'origin' exists, updating URL...`);
+} catch {
+  console.log(`   📡 Remote 'origin' not found, adding it...`);
+}
+
+// Add or update the remote
+if (remoteExists) {
+  await execAsync(`git remote set-url origin "${url}"`, { cwd: worktreePath });
+} else {
+  await execAsync(`git remote add origin "${url}"`, { cwd: worktreePath });
+}
+```
+
+**Flow:**
+1. Try `git remote get-url origin`
+2. If succeeds → remote exists → use `set-url`
+3. If fails → remote doesn't exist → use `add`
+
+**Result:**
+- ✅ Works with worktrees (no inherited remotes)
+- ✅ Works with normal repos (existing remotes)
+- ✅ Idempotent (can be run multiple times)
+
 ## 📊 Behavior
 
 ### **Success (with GITHUB_TOKEN)**

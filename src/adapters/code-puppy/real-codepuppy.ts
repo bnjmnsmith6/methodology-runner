@@ -289,13 +289,32 @@ export class RealCodePuppyAdapter implements AgentAdapter {
     try {
       console.log(`   🌐 Pushing branch ${branchName} to GitHub...`);
       
-      // Set remote URL with token for authentication
+      // Setup remote URL with token for authentication
       const remoteUrlWithToken = `https://${owner}:${githubToken}@github.com/${owner}/${repo}.git`;
+      const remoteUrlPublic = `https://github.com/${owner}/${repo}.git`;
       
-      await execAsync(
-        `git remote set-url origin "${remoteUrlWithToken}"`,
-        { cwd: worktreePath }
-      );
+      // Check if origin remote exists (worktrees don't inherit remotes)
+      let remoteExists = false;
+      try {
+        await execAsync('git remote get-url origin', { cwd: worktreePath });
+        remoteExists = true;
+        console.log(`   📡 Remote 'origin' exists, updating URL...`);
+      } catch {
+        console.log(`   📡 Remote 'origin' not found, adding it...`);
+      }
+      
+      // Add or update the remote
+      if (remoteExists) {
+        await execAsync(
+          `git remote set-url origin "${remoteUrlWithToken}"`,
+          { cwd: worktreePath }
+        );
+      } else {
+        await execAsync(
+          `git remote add origin "${remoteUrlWithToken}"`,
+          { cwd: worktreePath }
+        );
+      }
       
       // Push the branch
       await execAsync(
@@ -304,7 +323,6 @@ export class RealCodePuppyAdapter implements AgentAdapter {
       );
       
       // Reset remote URL to non-authenticated version (remove token from git config)
-      const remoteUrlPublic = `https://github.com/${owner}/${repo}.git`;
       await execAsync(
         `git remote set-url origin "${remoteUrlPublic}"`,
         { cwd: worktreePath }
