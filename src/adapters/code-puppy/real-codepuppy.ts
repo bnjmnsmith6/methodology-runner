@@ -153,6 +153,7 @@ export class RealCodePuppyAdapter implements AgentAdapter {
         let githubUrl: string | null = null;
         let branchName: string | null = null;
         
+        let gateResult: any = null;
         if (result.status === 'success') {
           // Commit any uncommitted build artifacts first
           await this.commitBuildArtifacts(
@@ -161,7 +162,7 @@ export class RealCodePuppyAdapter implements AgentAdapter {
           );
           
           // Run deterministic hard gates
-          const gateResult = runHardGates(worktreePath, result);
+          gateResult = runHardGates(worktreePath, result);
           console.log("   " + (gateResult.hard_gate_pass ? "PASS" : "FAIL") + " Hard gates: " + gateResult.summary);
           for (const check of gateResult.checks) {
             if (!check.passed) {
