@@ -3,7 +3,7 @@
 **Project:** Simple Tip Calculator  
 **Tier:** 1  
 **Built by:** GUPPI (autonomous AI development pipeline)  
-**Build cost:** 0.08  
+**Build cost:** 0.07  
 **Build date:** 2026-03-31
 
 ## What was requested
@@ -14,11 +14,11 @@
 
 ## What was built
 
-Created tip-calculator.html — a single self-contained HTML file with embedded CSS and JavaScript. Bill amount and tip percentage inputs trigger real-time calculation via input event listeners. Both acceptance-criteria examples verified: $50 + 20% = $60.00 and $23.45 + 18% = $27.67. Non-numeric inputs are guarded with isNaN checks. No external dependencies.
+tip-calculator.html already exists and fully satisfies all acceptance criteria: single HTML file with inline CSS/JS, numeric bill and tip inputs, real-time calculation via 'input' event listeners, correct formula (bill * (1 + tip/100)), 2-decimal currency display, non-numeric input validation (isNaN check shows $0.00), and no external dependencies.
 
 ## Files changed
 
-- tip-calculator.html
+
 
 ## How to run
 
