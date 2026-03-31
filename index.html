@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Number Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f4f8;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 2rem;
+    }
+
+    #number-display {
+      font-size: 6rem;
+      font-weight: bold;
+      color: #2563eb;
+      min-height: 7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    #number-display.placeholder {
+      color: #ccc;
+      font-size: 3rem;
+    }
+
+    button {
+      padding: 0.75rem 2rem;
+      font-size: 1.25rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    button:active {
+      background-color: #1e40af;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random Number Generator</h1>
+  <div id="number-display" class="placeholder">Click below</div>
+  <button onclick="generateNumber()">Generate Number</button>
+
+  <script>
+    function generateNumber() {
+      var number = Math.floor(Math.random() * 100) + 1;
+      var display = document.getElementById('number-display');
+      display.textContent = number;
+      display.classList.remove('placeholder');
+    }
+  </script>
+</body>
+</html>
