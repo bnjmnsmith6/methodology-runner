@@ -158,6 +158,12 @@ export async function runClaude(options: CliRunOptions): Promise<CliRunResult> {
           // Step 4: Strip markdown code block markers (```json and ```)
           resultString = resultString.trim();
           
+          // Try to extract JSON from code fence anywhere in the string
+          var fenceMatch = resultString.match(/```json\s*\n?([\s\S]*?)```/);
+          if (fenceMatch) {
+            resultString = fenceMatch[1].trim();
+          }
+
           // Remove opening ```json or ``` if present
           if (resultString.startsWith('```json')) {
             resultString = resultString.substring(7); // Remove ```json
