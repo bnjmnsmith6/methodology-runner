@@ -212,16 +212,11 @@ export class RealCodePuppyAdapter implements AgentAdapter {
                   sessionId: result.sessionId,
                   githubUrl,
                   branchName,
-                  gateResult: {
+                  gateResult: gateResult ? {
                     hard_gate_pass: gateResult.hard_gate_pass,
                     checks: gateResult.checks,
                     summary: gateResult.summary
-                  },
-                  gateResult: {
-                    hard_gate_pass: gateResult.hard_gate_pass,
-                    checks: gateResult.checks,
-                    summary: gateResult.summary
-                  }
+                  } : null
                 }
               }]
             };
