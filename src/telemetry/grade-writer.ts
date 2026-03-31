@@ -16,6 +16,7 @@ export async function writeGradeBundle(
   gateResult: GateResult,
   phase: string = 'pre-ship'
 ): Promise<string | null> {
+  if (!pipelineRunId) {
     console.warn('   No pipeline run ID - skipping grade bundle write');
     return null;
   }

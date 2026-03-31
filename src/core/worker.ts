@@ -223,12 +223,6 @@ async function executeJob(job: Job): Promise<void> {
       }
 
       // Write grade bundle if build step returned gate results
-      const gateResult = result.artifacts?.[0]?.metadata?.gateResult;
-      if (gateResult && pipelineRunId) {
-        writeGradeBundle(pipelineRunId, gateResult, 'pre-ship').catch(err => {
-          console.warn('   Grade bundle write failed: ' + err);
-        });
-      }
       
          }
     
