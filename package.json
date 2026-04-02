@@ -1,0 +1,12 @@
+{
+  "name": "music-library-licensing",
+  "version": "1.0.0",
+  "description": "Music library with mood tagging and licensing compliance for photo theme song matching",
+  "main": "services/MusicLibraryService.js",
+  "scripts": {
+    "test": "node tests/musicLibrary.test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
