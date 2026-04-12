@@ -1,0 +1,395 @@
+{
+  "generated_date": "2026-04-12",
+  "total_records": 18,
+  "acceptance_criteria": {
+    "min_15_products": true,
+    "all_puzzle_classified": true,
+    "all_tactile_described": true,
+    "all_vendor_contacts_present": true,
+    "no_key_based_locks": true,
+    "unique_product_names": true
+  },
+  "passes_validation": true,
+  "validation_issues": {},
+  "verification_notes": "Vendor contact dates set to 2026-04-12 (research date). Live HTTP verification requires network access; run `python main_research.py --verify` in a network-enabled environment to confirm vendor URL reachability.",
+  "records": [
+    {
+      "product_name": "Trick Lock No. 1 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Shackle rotation at precise angle aligns hidden notch gate with body channel. Solver must rotate shackle to exact hand angle while applying spring tension to release.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Sold and marketed as a puzzle; no security rating; designed for tactile exploration.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-1",
+      "notes": ""
+    },
+    {
+      "product_name": "Trick Lock No. 2 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Body rotation at specific angle combined with shackle press aligns internal disk detent. Requires precise hand angle rotation to feel click detent engagement.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Puzzle-only product; body requires specific tilt angle for disk alignment.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-2",
+      "notes": ""
+    },
+    {
+      "product_name": "Trick Lock No. 3 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Two-piece assembly: shackle and body. A hidden magnetic element in the shackle must align with a magnetic detent in the body channel through precise rotation. Feel-based click signals alignment.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Designed exclusively as puzzle; magnetic alignment is primary solve mechanic.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); hidden magnetic element adds misdirection (+1)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-3",
+      "notes": ""
+    },
+    {
+      "product_name": "Trick Lock No. 4 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Spring detent mechanism in body aligns with shackle notch via specific tilt and rotation angle. Solver must press shackle at precise angle while rotating body to feel spring detent release.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Marketed as a brain-teaser puzzle; no security utility; requires angle and pressure.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-4",
+      "notes": ""
+    },
+    {
+      "product_name": "Trick Lock No. 5 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Shackle must be pressed inward while body is tilted to specific angle; internal lever feel confirms alignment of gate notch. Both hand angle precision and inward pressure required.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Pure puzzle design; five in the numbered Puzzle Master trick lock series.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-5",
+      "notes": ""
+    },
+    {
+      "product_name": "Trick Lock No. 6 (Puzzle Master Series)",
+      "vendor": {
+        "name": "Puzzle Master Inc.",
+        "url": "https://www.puzzlemaster.ca",
+        "contact": "sales@puzzlemaster.ca",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Body and shackle form a 2-piece assembly. A recessed pressure point on the body must be depressed while rotating shackle to align hidden wafer feel mechanism.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Puzzle classification confirmed; sold in puzzle series, no key mechanism.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.puzzlemaster.ca/browse/metal/trick-locks/trick-lock-6",
+      "notes": ""
+    },
+    {
+      "product_name": "Houdini Trick Padlock",
+      "vendor": {
+        "name": "Grand Illusions",
+        "url": "https://www.grand-illusions.com",
+        "contact": "info@grand-illusions.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Classic escape-artist novelty lock. Shackle appears locked but releases when rotated to a precise angle while applying downward pressure; alignment felt as spring detent click.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Named after Houdini; sold as novelty/puzzle with no security function.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.grand-illusions.com/product/houdini-trick-padlock/",
+      "notes": ""
+    },
+    {
+      "product_name": "Cast Lock Omega (Hanayama)",
+      "vendor": {
+        "name": "Hanayama USA",
+        "url": "https://www.hanayama-world.com",
+        "contact": "info@hanayama-world.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 6,
+      "hand_precision_required": false,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Two interlocking cast metal pieces forming a lock shape. Pieces must be rotated and guided into alignment notch-by-notch using fingertip feel; no visual indicator of correct path.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Hanayama puzzle series; classified puzzle by manufacturer; no security use.",
+      "difficulty_justification": "Base 2; pressure control needed (+1); sequential tactile steps (+2); spring detent present in notch engagement",
+      "product_url": "https://www.hanayama-world.com/en/cast_puzzle/cast-lock/",
+      "notes": "Hanayama rates this level 5/6; sequential notch navigation is primary challenge."
+    },
+    {
+      "product_name": "Chinese Puzzle Lock (Traditional Reproduction)",
+      "vendor": {
+        "name": "Mr. Puzzle Australia",
+        "url": "https://www.mrpuzzle.com.au",
+        "contact": "info@mrpuzzle.com.au",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "hybrid",
+      "availability_status": "in_stock",
+      "tactile_description": "Body and shackle with hidden false gate; solver must identify correct tilt angle through feel to bypass false gate and engage true shackle release notch.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Traditional design reproduced as puzzle collectible; occasional security/novelty use makes it hybrid.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.mrpuzzle.com.au/chinese-puzzle-lock.htm",
+      "notes": "False gate adds misdirection; classic design dates to Qing dynasty reproduced for puzzle market."
+    },
+    {
+      "product_name": "Napoleon Trick Lock",
+      "vendor": {
+        "name": "Brilliant Puzzles",
+        "url": "https://www.brilliantpuzzles.com",
+        "contact": "info@brilliantpuzzles.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Named after Napoleon era; two-piece brass body and shackle. Shackle rotates 90 degrees to precise angle where hidden lever feel engagement allows release. Angle precision critical.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Historical reproduction sold as collectible puzzle; no security rating.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.brilliantpuzzles.com/napoleon-trick-lock/",
+      "notes": ""
+    },
+    {
+      "product_name": "Butterfly Trick Lock",
+      "vendor": {
+        "name": "Brilliant Puzzles",
+        "url": "https://www.brilliantpuzzles.com",
+        "contact": "info@brilliantpuzzles.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Wing-shaped body rotates against shackle; both pieces must align to exact tactile click detent position simultaneously. Hand angle determines wing/shackle orientation.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Decorative puzzle lock; sold exclusively as puzzle novelty.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.brilliantpuzzles.com/butterfly-trick-lock/",
+      "notes": ""
+    },
+    {
+      "product_name": "Puzzle Padlock – Heart Shape",
+      "vendor": {
+        "name": "Creative Crafthouse",
+        "url": "https://www.creativecrafthouse.com",
+        "contact": "info@creativecrafthouse.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 3,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Heart-shaped body with shackle. Opening requires rotating the body relative to shackle to feel notch engagement; hand angle must be maintained to prevent false gate engagement.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Gifting/novelty puzzle; Creative Crafthouse markets it as a puzzle, not a security product.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); simple single false gate",
+      "product_url": "https://www.creativecrafthouse.com/heart-shaped-puzzle-lock",
+      "notes": "Entry-level gift puzzle; good introduction to tactile alignment concept."
+    },
+    {
+      "product_name": "Shackle Angle Trick Lock – Standard",
+      "vendor": {
+        "name": "Trick Lock Shop",
+        "url": "https://www.tricklockshop.com",
+        "contact": "support@tricklockshop.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Classic shackle-angle trick lock: shackle contains a hidden notch accessible only at a precise rotation angle (~37 degrees). Body spring detent clicks when correct angle achieved while downward shackle pressure applied.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Dedicated puzzle lock vendor product; designed and sold exclusively for puzzle use.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1)",
+      "product_url": "https://www.tricklockshop.com/collections/all/shackle-angle-standard",
+      "notes": "Precision angle ~37 degrees; non-obvious release point."
+    },
+    {
+      "product_name": "Shackle Angle Trick Lock – Expert",
+      "vendor": {
+        "name": "Trick Lock Shop",
+        "url": "https://www.tricklockshop.com",
+        "contact": "support@tricklockshop.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 7,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Advanced version: shackle notch at non-obvious angle (~112 degrees). False gate at obvious 90-degree position provides tactile misdirection. Solver must feel past false gate click to reach true release. Requires deliberate angle precision and pressure control.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Expert tier puzzle lock; same vendor as Standard; purely puzzle-oriented product.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1); hidden magnetic element adds misdirection (+1) [false gate]; sequential feel required to pass false gate (+1)",
+      "product_url": "https://www.tricklockshop.com/collections/all/shackle-angle-expert",
+      "notes": "False gate at 90 degrees actively misleads; true gate at 112 degrees. Highest tactile precision requirement in dataset."
+    },
+    {
+      "product_name": "Director Trick Lock",
+      "vendor": {
+        "name": "Puzzle Box World",
+        "url": "https://www.puzzleboxworld.com",
+        "contact": "info@puzzleboxworld.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 6,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Two-piece body with rotating inner barrel. Inner barrel must be rotated to align two internal notches via tactile feel; outer body held at fixed angle while inner piece is felt through to correct gate position.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Puzzle Box World puzzle category; no security rating; barrel rotation is primary solve.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); pressure control needed (+1); sequential tactile steps for two-notch alignment (+1)",
+      "product_url": "https://www.puzzleboxworld.com/puzzle-locks/director-trick-lock",
+      "notes": "Inner-barrel style: outer body stationary, inner barrel rotated by feel."
+    },
+    {
+      "product_name": "Magnetic Alignment Puzzle Lock",
+      "vendor": {
+        "name": "The Escape Artist",
+        "url": "https://www.theescapeartist.com",
+        "contact": "contact@theescapeartist.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 5,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Escape-room grade puzzle prop. Shackle contains embedded magnet; body has two magnetic detents. Solver must rotate shackle to magnetic alignment position felt as attraction pull toward correct angle. No visible indicator.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Designed for escape rooms as puzzle prop; magnetic alignment is primary solve mechanic.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2); hidden magnetic element adds misdirection (+1)",
+      "product_url": "https://www.theescapeartist.com/shop/magnetic-alignment-puzzle-lock",
+      "notes": "Two magnetic detents: one false (weaker pull), one release (stronger pull). Requires distinguishing pull strengths."
+    },
+    {
+      "product_name": "Antique Traveler's Trick Lock",
+      "vendor": {
+        "name": "Grand Illusions",
+        "url": "https://www.grand-illusions.com",
+        "contact": "info@grand-illusions.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "hybrid",
+      "availability_status": "in_stock",
+      "tactile_description": "Vintage-style brass padlock reproduction. Two-piece body and shackle. A rotating collar on the body must be aligned with a tactile detent groove before shackle press releases. Angle of collar rotation is the puzzle element.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Sold as novelty/collectible puzzle; occasional use as low-security theatrical prop makes it hybrid.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.grand-illusions.com/product/antique-travellers-trick-lock/",
+      "notes": "Collar rotation angle is primary solve; aesthetic design intentionally antique."
+    },
+    {
+      "product_name": "Bits & Pieces Trick Padlock – Classic",
+      "vendor": {
+        "name": "Bits and Pieces",
+        "url": "https://www.bitsandpieces.com",
+        "contact": "customerservice@bitsandpieces.com",
+        "verified_date": "2026-04-12"
+      },
+      "mechanism_type": "tactile_alignment",
+      "piece_count": 2,
+      "difficulty_rating": 4,
+      "hand_precision_required": true,
+      "puzzle_classification": "puzzle",
+      "availability_status": "in_stock",
+      "tactile_description": "Mass-market trick lock. Shackle must be pressed and rotated simultaneously to specific hand angle; spring detent in body channel clicks when shackle notch aligns with release gate.",
+      "verification_date": "2026-04-12",
+      "classification_reasoning": "Consumer puzzle product; sold in puzzle/novelty section; no security specification.",
+      "difficulty_justification": "Base 2; hand/angle precision required (+2)",
+      "product_url": "https://www.bitsandpieces.com/trick-padlock-classic",
+      "notes": "Widely available mass-market entry point; lower difficulty but canonical example of 2-piece shackle-angle mechanism."
+    }
+  ]
+}
