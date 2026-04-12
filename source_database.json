@@ -1,0 +1,91 @@
+{
+  "puzzle_categories": [
+    {
+      "name": "Himitsu-bako (秘密箱) — Hakone Secret Boxes",
+      "historical_context": "Originating in the Meiji era (1868–1912) in Hakone, Kanagawa Prefecture, Himitsu-bako are wooden puzzle containers that open only when the correct sequence of sliding panels is displaced. They evolved from the Hakone Yosegi-zaiku (寄木細工) geometric mosaic woodworking tradition. The simplest forms require a single slide (1-step), making them 2-piece tactile objects where the solver must locate a hidden groove channel by feel.",
+      "two_piece_variants": [
+        {
+          "name": "1-step Himitsu-bako (一手秘密箱)",
+          "tactile_mechanism": "Single sliding panel conceals a catch aligned to a hidden groove. The solver must run a finger along the exterior surface to locate the catch position; no visual indicator is present. Lateral pressure at the correct point releases the panel, separating the two-piece lid-and-body assembly.",
+          "description": "The simplest Hakone secret box form. A wooden container (body) with a lid locked by one sliding panel. The panel's release point is detectable only by touch — a slight depression or resistance change under the finger indicates the correct lateral slide position. When released, lid and body separate as two pieces."
+        }
+      ]
+    },
+    {
+      "name": "Kumiki (組み木) — Traditional Interlocking Woodwork",
+      "historical_context": "Kumiki derives from traditional Japanese joinery (大工仕事) of the Edo period (1603–1868), when craftsmen began producing ornamental interlocking wooden objects as demonstration pieces and gifts. Puzzle kumiki — designed to be disassembled and reassembled — appear in Edo-period craft manuals. The tradition is concentrated in the Kiso Valley (Nagano) and Kochi Prefecture, where dense forest resources supported fine woodworking industries. 2-piece forms are among the oldest attested variants.",
+      "two_piece_variants": [
+        {
+          "name": "Dango Kumiki (団子組み木)",
+          "tactile_mechanism": "Two convex rounded pieces interlock via a hidden internal notch system. The exterior surface is smooth and featureless, giving no visual indication of the release angle. The solver must rotate the pieces relative to each other while applying gentle axial pressure until the internal notch registers and the pieces separate. Solving requires combined rotation and press across two degrees of freedom.",
+          "description": "A 2-piece interlocking wooden puzzle in which both pieces have a roughly spherical or convex exterior. The internal joining system — a notch-and-key cut — is entirely hidden by the curved exterior. Reassembly requires finding the correct rotational alignment by feel before the key slides into the notch."
+        },
+        {
+          "name": "Tsutsumi-gata 2-piece (包み形)",
+          "tactile_mechanism": "One piece 'wraps' conceptually around a keyed protrusion on the second piece. The alignment detent is located at an off-principal-axis rotation angle (approximately 15° from the visually symmetrical position), requiring the solver to probe past the intuitive-looking alignment points to find the true release. 1 degree of freedom (rotation), but the solution angle is non-obvious.",
+          "description": "A 2-piece kumiki form where one piece has a hollow receiving channel and the second has a matching protrusion. The exterior profile makes the pieces look fully symmetrical, obscuring that the release requires rotation to a non-obvious angle. Traditional training puzzle for apprentice woodworkers learning joinery alignment by feel."
+        }
+      ]
+    },
+    {
+      "name": "Karakuri Objects (からくり細工) — Trick Mechanism Crafts",
+      "historical_context": "Karakuri (からくり, 'mechanism' or 'contrivance') is a broad Edo-period tradition encompassing automata, trick furniture, and puzzle containers. The craft declined in the Meiji period with industrialization but was revived by the Karakuri Creation Group (からくり創作研究会) founded in 1984 in Odawara by puzzle and craft enthusiasts including Akio Kamei. The group's members produce hand-crafted limited-run puzzle objects that carry on the tradition of hidden mechanism work.",
+      "two_piece_variants": [
+        {
+          "name": "Karakuri 2-component coin/disc objects",
+          "tactile_mechanism": "A flat disc-and-ring or bar-and-collar configuration where the inner piece has an asymmetric cam profile machined into its edge. Alignment requires positioning the inner piece to the cam's release notch by feeling the subtle resistance change as the cam engages, then performing a short diagonal translation (simultaneous slide and slight rotation) that is not apparent from the exterior geometry.",
+          "description": "Small flat-form puzzle objects produced by individual Karakuri Creation Group members as standalone pieces. Visually, the two pieces appear to be a simple flat disc within a matching ring, with no obvious mechanism. The release requires locating the cam detent by touch and executing a combined diagonal motion. Produced in limited runs; not part of the numbered Karakuri box series."
+        }
+      ]
+    },
+    {
+      "name": "Nesting Lock Objects (錠前組み物) — Traditional Lock-Form Puzzles",
+      "historical_context": "Edo-period metalwork traditions in Sakai (Osaka) and Mito (Ibaraki) produced ornamental locks that functioned as demonstration puzzles. Unlike Western pin-tumbler mechanisms, certain Japanese decorative lock forms used asymmetric cam inserts that required simultaneous compression and rotation to align to a tactile detent. Museum examples survive in the Tokyo National Museum (東京国立博物館) and Sakai City Museum (堺市博物館). Contemporary specialist metalwork artisans produce authenticated reproductions.",
+      "two_piece_variants": [
+        {
+          "name": "Karakuri-jō reproduction (からくり錠複製品)",
+          "tactile_mechanism": "A two-component lock-and-key object where the 'key' carries an irregular cam profile matched to an internal tumbler. The correct engagement position must be found by feel — compression and rotation are applied simultaneously while the solver probes for the detent registration. No visual guide marks are present on authentic reproductions. Solving requires 2 degrees of freedom (rotation + axial compression) in combination.",
+          "description": "Modern reproductions of historic Edo-period demonstration locks. The lock body and key insert form a 2-piece puzzle object. The key's cam profile is designed so that incorrect rotation angles produce resistance without release; only at the precise cam-to-tumbler alignment (found tactilely) does the insert travel through. Produced by metalwork artisans in the Sakai and Mito regions."
+        }
+      ]
+    }
+  ],
+  "current_sources": [
+    {
+      "type": "artisan",
+      "name": "Karakuri Creation Group (からくり創作研究会)",
+      "contact_info": "Website: karakuri.gr.jp | Email inquiries via contact form on site | Located in Odawara, Kanagawa, Japan | International orders accepted through website or authorized retailers",
+      "specialties": [
+        "Karakuri trick objects (numbered box series and standalone pieces)",
+        "2-component disc and flat-form puzzle objects",
+        "Contemporary Karakuri in Edo-period tradition",
+        "Limited-run hand-crafted pieces by named artisan members"
+      ],
+      "authenticity_notes": "The Karakuri Creation Group is a verified artisan collective, not a manufacturer. Each piece is signed by the individual maker and produced in runs of 30–100 units. Members include Akio Kamei, Hiroshi Iwahara, and Nobuyuki Ohashi, all recognized in the international puzzle collector community. Pieces are trackable by maker signature and production number. Avoid unsigned pieces labeled 'Karakuri-style' from unverified sellers — these are not authentic CCG pieces."
+    },
+    {
+      "type": "artisan",
+      "name": "Hakone Maruyama Co. (箱根丸山)",
+      "contact_info": "Located in Hakone, Kanagawa, Japan | Website: hakone-maruyama.co.jp | Primary language: Japanese; English inquiries accepted | International shipping available",
+      "specialties": [
+        "Traditional Himitsu-bako (Hakone secret boxes)",
+        "1-step and minimal-step variants",
+        "Hakone Yosegi-zaiku geometric mosaic woodwork",
+        "Authenticated heritage workshop production"
+      ],
+      "authenticity_notes": "Hakone Maruyama is a traditional family workshop operating within the Hakone Yosegi-zaiku Cooperative Association (箱根寄木細工協同組合). Membership in this cooperative is the primary authenticity indicator for Hakone-tradition pieces, distinguishing heritage workshop production from tourist-trade imitations. When ordering, confirm the specific box's step-count to identify the 1-step (2-piece tactile) variant. Note: direct verification of current contact details is recommended before ordering, as family workshop contact methods may change."
+    },
+    {
+      "type": "vendor",
+      "name": "Puzzle Master Inc.",
+      "contact_info": "Website: puzzlemaster.ca | English-language interface | Ships internationally from Canada | Customer service available via website contact form",
+      "specialties": [
+        "Authenticated Karakuri Creation Group pieces",
+        "Selected Hakone secret boxes",
+        "Specialist puzzle retail with knowledgeable staff",
+        "Accessible English-language entry point for Japanese authentic pieces"
+      ],
+      "authenticity_notes": "Puzzle Master is an authorized international retailer for Karakuri Creation Group pieces and works directly with verified Japanese suppliers for Hakone boxes. They can advise on which specific pieces represent 2-piece or minimal-mechanism formats — request this explicitly when inquiring. As a Canadian retailer they provide English-language support and standard consumer purchase protections, making them the most accessible verified source for international buyers. Their stock is genuine and traceable to original makers."
+    }
+  ]
+}
